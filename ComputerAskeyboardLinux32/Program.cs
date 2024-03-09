@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Threading;
+using PowerArgs;
 
 public class Program
 {
-    // 初始化键盘布局
+    //initialize keylayout
     const string keyboardLayout = @"
 --------------------------------------------------------------------------------------------------------------------
  ESC  │  MT  │  V-  │  V+  │   │  TV  │      │      │      │   │  IO  │ PRTSR│SCRLK │PAUSE │   │INSERT│ HOME │ PGUP │
@@ -88,16 +89,28 @@ public class Program
         string mouseDevice = "mouse0";
 
         StartArgs parsedArgs;
-        parsedArgs = new StartArgs() { AutoScan = true };
+
+        try
+        {
+            parsedArgs = Args.Parse<StartArgs>(args);
+            choosedDevice = parsedArgs.Device;
+            ttyUSBDirectory = parsedArgs.ScanPath;
+            mute = !parsedArgs.Verbose;
+            switch_alt = parsedArgs.MacOS;
+            mouseDevice = parsedArgs.Mouse;
+
+           
+        }
+        catch (ArgException ex)
+        {
+            WriteLogOnScreen(ex.Message);
+            Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
+            return;
+        }
 
 
-        mouseDevice = "mouse0";
-        switch_alt = true;
-        mute = false;
-
-
-        Console.CursorVisible = false; // 隐藏光标
-        Console.Clear(); // 清空控制台
+        Console.CursorVisible = false; //hide 
+        Console.Clear(); //
         var chars = new List<List<char>>();
         List<char> chartList = new List<char>();
         chars.Add(chartList);
@@ -111,10 +124,9 @@ public class Program
            }
            chartList.Add(c);
        });
-
-        // 在控制台中显示键盘布局
+       
         Console.WriteLine(keyboardLayout);
-        //Console.TreatControlCAsInput = true;
+        Console.TreatControlCAsInput = true;
         using (AggregateInputReader aggHandler1 = new AggregateInputReader())
         {
             WriteLogOnScreen("This is a test log ");

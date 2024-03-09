@@ -1,0 +1,29 @@
+﻿<Properties StartupConfiguration="{55EA9A25-BAB0-4BD5-A8AF-6494E43052F8}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="../ComputerAsKeyboardInterface/Program.cs">
+    <Files>
+      <File FileName="ComputerAskeyboardLinux32/Program.cs" Line="10" Column="27" />
+      <File FileName="../ComputerAsKeyboardInterface/StartArgs.cs" Line="33" Column="1" />
+      <File FileName="ComputerAskeyboardLinux32/StartArgs.cs" Line="30" Column="18" />
+      <File FileName="../ComputerAsKeyboardInterface/Program.cs" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="ComputerAskeyboardLinux32" expanded="True">
+            <Node name="ComputerAskeyboardLinux32" expanded="True">
+              <Node name="Packages" expanded="True" />
+              <Node name="Program.cs" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.ItemProperties.ComputerAskeyboardLinux32 PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

@@ -30,6 +30,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="PowerArgs">
+      <HintPath>..\packages\PowerArgs.2.0.0.0\lib\net40\PowerArgs.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -49,6 +52,9 @@
     <Compile Include="KeyPressEvent.cs" />
     <Compile Include="EventCode.cs" />
     <Compile Include="MouseAxis.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
