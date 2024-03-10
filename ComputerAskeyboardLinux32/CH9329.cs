@@ -17,6 +17,7 @@ namespace CH9329NameSpace
 
         SerialPort serialPort;
 
+        private object lockObject = new object();
         public Queue<string> MessageLog = new Queue<string>();
 
         public int MessageLogCount = 32;
@@ -403,12 +404,15 @@ namespace CH9329NameSpace
 
         private string sendPacket(byte[] data)
         {
-            serialPort.Write(data, 0, data.Length);
-            Thread.Sleep(20);
-            string resultMessage = serialPort.ReadExisting();
+            lock (lockObject)
+            {
+                serialPort.Write(data, 0, data.Length);
+                Thread.Sleep(20);
+                string resultMessage = serialPort.ReadExisting();
 
-            addMessageLog(data.ToString() + "|" + resultMessage);
-            return resultMessage;
+                addMessageLog(data.ToString() + "|" + resultMessage);
+                return resultMessage;
+            }
         }
 
         private byte[] createPacketArray(List<int> arrList, bool addCheckSum)
