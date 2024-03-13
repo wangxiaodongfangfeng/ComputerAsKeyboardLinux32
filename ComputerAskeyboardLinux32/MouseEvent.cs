@@ -8,6 +8,7 @@ namespace ComputerAsKeyboardInterface
         public int Y { get; set; }
         public byte BX { get; set; }
         public byte BY { get; set; }
+        public int ScrollCount { get; set; }
         public string DevicePath { get; set; }
     }
 }

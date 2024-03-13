@@ -657,7 +657,21 @@ namespace CH9329NameSpace
             sendPacket(mouseButtonUpPacketForMac);
         }
 
+        public void mouseScrollForMac(int value)
+        {
+            // ========================
+            // mouseClickPacketContents
+            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01}
+            // CMD = 0x05 : USB mouse relative mode
+            // ========================
+            List<int> mouseButtonDownPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            mouseButtonDownPacketListInt[11] = (int)value;
+            mouseButtonDownPacketListInt[6] = (int)MouseButtonCode.MIDDLE;
 
+            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, true);
+            sendPacket(mouseButtonDownPacket);
+
+        }
 
 
         /// <summary>

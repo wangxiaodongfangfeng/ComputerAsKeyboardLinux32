@@ -8,7 +8,10 @@ namespace ComputerAsKeyboardInterface
     {
         public delegate void RaiseMouseMove(MouseEvent e);
 
+        public delegate void RaiseMouseScroll(MouseEvent e);
+
         public event RaiseMouseMove OnMouseMove;
+        public event RaiseMouseScroll OnMouseScroll;
 
         private const int BufferLength = 3;
 
@@ -38,7 +41,16 @@ namespace ComputerAsKeyboardInterface
                     _stream.Read(_buffer, 0, BufferLength);
                     int dx = _buffer[1] - ((_buffer[0] & 0x10) != 0 ? 256 : 0);
                     int dy = _buffer[2] - ((_buffer[0] & 0x20) != 0 ? 256 : 0);
-                    OnMouseMove?.Invoke(new MouseEvent() { X = dx, Y = -dy, BX = _buffer[0], BY = _buffer[1], DevicePath = _path });
+                    int button = _buffer[0] & 0x04; // Extract button state
+                    //middle button is down
+                    if (button > 0)
+                    {
+                        OnMouseScroll?.Invoke(new MouseEvent() { ScrollCount = Math.Abs(dy) > 12 ? -dy / 4 : -dy });
+                    }
+                    else
+                    {
+                        OnMouseMove?.Invoke(new MouseEvent() { X = dx, Y = -dy, BX = _buffer[0], BY = _buffer[1], DevicePath = _path });
+                    }
                 }
                 catch (Exception e)
                 {

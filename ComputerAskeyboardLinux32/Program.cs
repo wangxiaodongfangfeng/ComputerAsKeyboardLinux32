@@ -99,7 +99,7 @@ public class Program
             switch_alt = parsedArgs.MacOS;
             mouseDevice = parsedArgs.Mouse;
 
-           
+
         }
         catch (ArgException ex)
         {
@@ -124,7 +124,7 @@ public class Program
            }
            chartList.Add(c);
        });
-       
+
         Console.WriteLine(keyboardLayout);
         Console.TreatControlCAsInput = true;
         using (AggregateInputReader aggHandler1 = new AggregateInputReader())
@@ -350,7 +350,10 @@ public class Program
                         ch9328?.mouseMoveRel(e.X, e.Y);
                     }
                 };
-
+                mouseReader.OnMouseScroll += (e) =>
+                {
+                    ch9328?.mouseScrollForMac(e.ScrollCount);
+                };
                 System.Console.CancelKeyPress += (sender, eventArgs) =>
                 {
                     ch9328?.keyUpAll();
