@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading;
 using PowerArgs;
+using ComputerAskeyboardLinux32;
 
 public class Program
 {
@@ -52,7 +53,7 @@ public class Program
     private static bool device_disconnected = false;
     private static bool exit_in_next = false;
 
-    private static CH9329 ch9328;
+    private static IKeyboard ch9328;
 
     private static readonly Dictionary<EventCode, byte> specialKeyMap = new Dictionary<EventCode, byte>();
 
@@ -87,6 +88,7 @@ public class Program
         // Path to the directory where ttyUSB devices are located
         string ttyUSBDirectory = "/dev/";
         string mouseDevice = "mouse0";
+        bool bluetooth = false;
 
         StartArgs parsedArgs;
 
@@ -98,8 +100,7 @@ public class Program
             mute = !parsedArgs.Verbose;
             switch_alt = parsedArgs.MacOS;
             mouseDevice = parsedArgs.Mouse;
-
-           
+            bluetooth = parsedArgs.Bluetooth;
         }
         catch (ArgException ex)
         {
@@ -124,7 +125,7 @@ public class Program
            }
            chartList.Add(c);
        });
-       
+
         Console.WriteLine(keyboardLayout);
         Console.TreatControlCAsInput = true;
         using (AggregateInputReader aggHandler1 = new AggregateInputReader())
@@ -147,12 +148,10 @@ public class Program
 
                     // Filter the list to only include ttyUSB devices
                     var ttyUSBDevices = Array.FindAll(devices, s => s.StartsWith("/dev/ttyUSB", StringComparison.Ordinal));
-
-                    var index = 0;
-
                     if (ttyUSBDevices.Length <= 0)
                     {
                         WriteLogOnScreen("TTY Devices are not available, please plug in your device and try again");
+                        return;
                     }
 
                     //if only one device is available ,choose it directly.
@@ -163,40 +162,23 @@ public class Program
                     else
                     {
                         // Output the list of ttyUSB devices
-                        WriteLogOnScreen("ttyUSB devices:");
-                        foreach (var device in ttyUSBDevices)
-                        {
-                            WriteLogOnScreen(string.Format("{0}.{1}",++index,device));
-                        }
-                        var code = 0;
-
-                        //Try to choose a USB Device we want to use
-                        while (code <= 0 || code > ttyUSBDevices.Length + 1)
-                        {
-                            WriteLogOnScreen("Please Choose the device you want to use");
-                            var codeStr = Console.ReadLine();
-                            if (codeStr != null)
-                            {
-                                var result = 0;
-                                code = int.TryParse(codeStr, out result) ? result : 0;
-                            }
-                        }
-                        choosedDevice = devices[code - 1];
+                        WriteLogOnScreen("There are more than one device in the folder, please specify the device you want to use");
+                        return;
                     }
 
                 }
                 catch (Exception ex)
                 {
                     // Handle any exceptions that may occur
-                    WriteLogOnScreen(string.Format("An error occurred: {0}",ex.Message));
+                    WriteLogOnScreen(string.Format("An error occurred: {0}", ex.Message));
                 }
             }
-            WriteLogOnScreen(String.Format("device is {0}",choosedDevice));
+            WriteLogOnScreen(String.Format("device is {0}", choosedDevice));
             using (AggregateInputReader aggHandler = new AggregateInputReader())
             {
                 if (File.Exists(choosedDevice))
                 {
-                    ch9328 = new CH9329(PortName: choosedDevice);
+                    ch9328 = GenerateKeyboard(bluetooth, choosedDevice);
                 }
 
                 var watcher = new FileSystemWatcher(ttyUSBDirectory)
@@ -208,13 +190,13 @@ public class Program
 
                 watcher.Created += (sender, e) =>
                 {
-                    WriteLogOnScreen(string.Format("File created:{0}",e.FullPath));
+                    WriteLogOnScreen(string.Format("File created:{0}", e.FullPath));
                     try
                     {
                         if (e.FullPath.Contains("ttyUSB"))
                         {
-                            ch9328 = new CH9329(PortName: e.FullPath);
-                            WriteLogOnScreen(String.Format("ConnectToAnother:{0}",e.FullPath));
+                            ch9328 = GenerateKeyboard(bluetooth, e.FullPath);
+                            WriteLogOnScreen(String.Format("ConnectToAnother:{0}", e.FullPath));
                             device_disconnected = false;
                         }
                     }
@@ -226,7 +208,7 @@ public class Program
                 };
                 watcher.Deleted += (sender, e) =>
                 {
-                    WriteLogOnScreen(string.Format("File Deleted:{0}",e.FullPath));
+                    WriteLogOnScreen(string.Format("File Deleted:{0}", e.FullPath));
                     if (e.FullPath == choosedDevice)
                     {
                         WriteLogOnScreen("Device is removed , can't use now");
@@ -238,7 +220,7 @@ public class Program
                 {
                     if (!mute)
                     {
-                        WriteLogOnScreen(String.Format("Code:{0} State:{1},Event:{2}",e.Code,e.State,e.DevicePath));
+                        WriteLogOnScreen(String.Format("Code:{0} State:{1},Event:{2}", e.Code, e.State, e.DevicePath));
                     }
                     // take no action when toggle is off
                     if (!toggle || device_disconnected)
@@ -327,7 +309,7 @@ public class Program
                     if (e.Code == EventCode.Prog1 && e.State == KeyState.KeyUp)
                     {
                         toggle = !toggle;
-                        WriteLogOnScreen(String.Format("Toggle is {0} now", (toggle? "on":"off")));
+                        WriteLogOnScreen(String.Format("Toggle is {0} now", (toggle ? "on" : "off")));
                     }
                 };
                 //handle mute event, we don't like log to be printed
@@ -336,13 +318,14 @@ public class Program
                     if (e.Code == EventCode.Mute && e.State == KeyState.KeyUp)
                     {
                         mute = !mute;
-                        WriteLogOnScreen(String.Format("Log is {0} now", (mute? "on":"off")));
+                        WriteLogOnScreen(String.Format("Log is {0} now", (mute ? "on" : "off")));
                     }
                 };
 
-                var mouseReader = new MouseReader( String.Format("/dev/input/{0}",mouseDevice));
+                var mouseReader = new MouseReader(String.Format("/dev/input/{0}", mouseDevice));
                 mouseReader.OnMouseMove += (e) =>
                 {
+                    if (ch9328 == null) return;
                     if (MouseKeyHold)
                     {
                         ch9328.mouseMoveRel(e.X, e.Y, true, HoldMouseKey);
@@ -353,8 +336,15 @@ public class Program
                     }
                 };
 
+                mouseReader.OnMouseScroll += (e) =>
+                {
+                    if (ch9328 == null) return;
+                    ch9328.mouseScrollForMac(e.ScrollCount);
+                };
+
                 System.Console.CancelKeyPress += (sender, eventArgs) =>
                 {
+                    if (ch9328 == null) return;
                     ch9328.keyUpAll();
                 };
                 while (true)
@@ -473,6 +463,10 @@ public class Program
             Console.SetCursorPosition(0, 28 + (++index));
             Console.WriteLine(content);
         }
+    }
+    private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
+    {
+        return bluetooth ? (IKeyboard)new BTK05Namespace.BTK05(port) : (IKeyboard)new CH9329(port);
     }
 }
 

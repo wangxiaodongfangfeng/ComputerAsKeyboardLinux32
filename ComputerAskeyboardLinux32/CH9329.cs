@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Ports;
+using ComputerAskeyboardLinux32;
 
 namespace CH9329NameSpace
 {
-    public class CH9329
+    public class CH9329:IKeyboard
     {
         public string PortName;
         public int BaudRate;
@@ -427,19 +428,6 @@ namespace CH9329NameSpace
 
         }
 
-        public void PrintKeyA()
-        {
-            byte[] list = { 0x57, 0xAB, 0x00, 0x02, 0x08, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
-            sendPacket(list);
-        }
-
-        public void ReleaseKeyA()
-        {
-            byte[] list = { 0x57, 0xAB, 0x00, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C };
-            sendPacket(list);
-        }
-
-
         public void charKeyType(byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
         {
             keyDown(KeyGroup.CharKey, k0, k1, k2, k3, k4, k5, k6);
@@ -567,6 +555,21 @@ namespace CH9329NameSpace
         public void mouseButtonUpAllForMac()
         {
             sendPacket(mouseButtonUpPacketForMac);
+        }
+        public void mouseScrollForMac(int value)
+        {
+            // ========================
+            // mouseClickPacketContents
+            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01}
+            // CMD = 0x05 : USB mouse relative mode
+            // ========================
+            List<int> mouseButtonDownPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            mouseButtonDownPacketListInt[11] = (int)value;
+            mouseButtonDownPacketListInt[6] = (int)MouseButtonCode.MIDDLE;
+
+            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, true);
+            sendPacket(mouseButtonDownPacket);
+
         }
 
         /// <summary>

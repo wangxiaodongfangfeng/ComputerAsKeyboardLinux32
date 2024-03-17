@@ -9,5 +9,7 @@ namespace ComputerAsKeyboardInterface
         public byte BX { get; set; }
         public byte BY { get; set; }
         public string DevicePath { get; set; }
+
+        public int ScrollCount { get; set; }
     }
 }

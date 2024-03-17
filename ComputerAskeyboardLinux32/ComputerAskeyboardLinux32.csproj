@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="BTK05.cs" />
     <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="IKeyboard.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AggregateMouseReader.cs" />

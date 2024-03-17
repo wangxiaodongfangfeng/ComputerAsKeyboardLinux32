@@ -6,9 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Ports;
 using CH9329NameSpace;
+using ComputerAskeyboardLinux32;
 namespace BTK05Namespace
 {
-    public class BTK05
+    public class BTK05:IKeyboard
     {
         public string PortName;
         public int BaudRate;

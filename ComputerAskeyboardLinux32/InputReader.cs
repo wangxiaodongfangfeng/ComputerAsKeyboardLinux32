@@ -11,7 +11,7 @@ public class InputReader : IDisposable
     public event RaiseKeyPress OnKeyPress;
     public event RaiseMouseMove OnMouseMove;
 
-    private const int BufferLength = 24;
+    private const int BufferLength = 16;
 
     private readonly byte[] _buffer = new byte[BufferLength];
 
@@ -39,9 +39,9 @@ public class InputReader : IDisposable
 
             _stream.Read(_buffer, 0, BufferLength);
 
-            var type = BitConverter.ToInt16(new[] { _buffer[16], _buffer[17] }, 0);
-            var code = BitConverter.ToInt16(new[] { _buffer[18], _buffer[19] }, 0);
-            var value = BitConverter.ToInt32(new[] { _buffer[20], _buffer[21], _buffer[22], _buffer[23] }, 0);
+            var type = BitConverter.ToInt16(new[] { _buffer[8], _buffer[9] }, 0);
+            var code = BitConverter.ToInt16(new[] { _buffer[10], _buffer[11] }, 0);
+            var value = BitConverter.ToInt32(new[] { _buffer[12], _buffer[13], _buffer[14], _buffer[15] }, 0);
 
             var eventType = (EventType)type;
 
