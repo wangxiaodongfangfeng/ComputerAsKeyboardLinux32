@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Ports;
-
-namespace CH9329NameSpace
+using CH9329NameSpace;
+namespace BTK05Namespace
 {
-    public class CH9329
+    public class BTK05
     {
         public string PortName;
         public int BaudRate;
@@ -17,7 +17,6 @@ namespace CH9329NameSpace
 
         SerialPort serialPort;
 
-        private object lockObject = new object();
         public Queue<string> MessageLog = new Queue<string>();
 
         public int MessageLogCount = 32;
@@ -33,7 +32,7 @@ namespace CH9329NameSpace
         }
 
 
-        public CH9329(string PortName = "COM5", int xSize = 1920, int ySize = 1080, int BaudRate = 9600)
+        public BTK05(string PortName = "COM5", int xSize = 1920, int ySize = 1080, int BaudRate = 9600)
         {
             this.PortName = PortName;
             this.BaudRate = BaudRate;
@@ -50,6 +49,7 @@ namespace CH9329NameSpace
         }
 
         private Dictionary<mediaKey, byte[]> mediaKeyTable;
+
 
 
         private void createMediaKeyTable()
@@ -332,19 +332,14 @@ namespace CH9329NameSpace
 
         }
 
-
-
         private string sendPacket(byte[] data)
         {
-            lock (lockObject)
-            {
-                serialPort.Write(data, 0, data.Length);
-                Thread.Sleep(20);
-                string resultMessage = serialPort.ReadExisting();
+            serialPort.Write(data, 0, data.Length);
+            Thread.Sleep(20);
+            string resultMessage = serialPort.ReadExisting();
 
-                addMessageLog(data.ToString() + "|" + resultMessage);
-                return resultMessage;
-            }
+            addMessageLog(data.ToString() + "|" + resultMessage);
+            return resultMessage;
         }
 
         private byte[] createPacketArray(List<int> arrList, bool addCheckSum)
@@ -357,33 +352,13 @@ namespace CH9329NameSpace
         /// <summary>
         /// charKeyUpPacket
         /// </summary>
-        byte[] charKeyUpPacket = { 0x57, 0xAB, 0x00, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c };
+        byte[] charKeyUpPacket = { 0x0C, 0x00, 0xA1, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
         /// <summary>
         /// 
         /// mediaKeyUpPacket
         /// </summary>
         byte[] mediaKeyUpPacket = { 0x57, 0xAB, 0x00, 0x03, 0x04, 0x02, 0x00, 0x00, 0x00, 0x0B };
 
-
-
-        public byte CHIP_VERSION;
-        public byte CHIP_STATUS;
-        public bool NUM_LOCK;
-        public bool CAPS_LOCK;
-        public bool SCROLL_LOCK;
-
-        public void getInfo()
-        {
-            byte[] getInfoPacket = { 0x57, 0xAB, 0x00, (byte)CommandCode.GET_INFO, 0x00, 0x03 };
-            string resultString = sendPacket(getInfoPacket);
-
-            CHIP_VERSION = (byte)resultString[0];
-            CHIP_STATUS = (byte)resultString[1];
-            byte flagByte = (byte)resultString[2];
-            NUM_LOCK = ((int)(flagByte & 0x01) > 0 ? true : false);
-            CAPS_LOCK = (flagByte & 0x02) > 0;
-            SCROLL_LOCK = (flagByte & 0x04) > 0;
-        }
 
         /// <summary>
         /// Push key
@@ -398,18 +373,12 @@ namespace CH9329NameSpace
         /// <param name="k6">key code #6</param>
         public void keyDown(KeyGroup keyGroup, byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
         {
-            // ========================
-            // keyDownPacketContents
-            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x02} + LEN{0x08} + DATA{k0, 0x00, k1, k2, k3, k4, k5, k6}
-            // CMD = KeyGroup
-            // ========================
-            List<int> keyDownPacketListInt = new List<int> { 0x57, 0xAB, 0x00, (int)keyGroup, 0x08, k0, 0x00, k1, k2, k3, k4, k5, k6 };
-
-            byte[] keyDownPacket = createPacketArray(keyDownPacketListInt, true);
-
+            List<int> keyDownPacketListInt = new List<int> { 0x0C, 0x00, 0xA1, 0x01, k0, 0x00, k1, k2, k3, k4, k5, k6 };
+            byte[] keyDownPacket = createPacketArray(keyDownPacketListInt, false);
             sendPacket(keyDownPacket);
-
         }
+
+
 
         public void keyUpAll()
         {
@@ -426,20 +395,6 @@ namespace CH9329NameSpace
             keyDown(KeyGroup.CharKey, (byte)specialKeyCode, 0x00);
 
         }
-
-        public void PrintKeyA()
-        {
-            byte[] list = { 0x57, 0xAB, 0x00, 0x02, 0x08, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
-            sendPacket(list);
-        }
-
-        public void ReleaseKeyA()
-        {
-            byte[] list = { 0x57, 0xAB, 0x00, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C };
-            sendPacket(list);
-        }
-
-
         public void charKeyType(byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
         {
             keyDown(KeyGroup.CharKey, k0, k1, k2, k3, k4, k5, k6);
@@ -498,27 +453,33 @@ namespace CH9329NameSpace
         {
             if (x > 127) { x = 127; };
             if (x < -128) { x = -128; };
-            if (x < 0) { x = 0x100 + x; };
 
             if (y > 127) { y = 127; };
             if (y < -128) { y = -128; };
-            if (y < 0) { y = 0x100 + y; };
 
             // ========================
             // mouseMoveRelPacketContents
             // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01, 0x00}
             // CMD = 0x05 : USB mouse relative mode
             // ========================
-            List<int> mouseMoveRelPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00 };
+            List<int> mouseMoveRelPacketListInt = new List<int> { 0x0B, 0x00, 0xA1, 0x05, 0x00 };
             if (keyHold)
             {
-                mouseMoveRelPacketListInt[6] = (byte)button;
+                mouseMoveRelPacketListInt[4] = (byte)button;
             }
-            mouseMoveRelPacketListInt.Add((byte)(x));
-            mouseMoveRelPacketListInt.Add((byte)(y));
+
+            byte[] bytesx = BitConverter.GetBytes((short)x);
+            byte[] bytesy = BitConverter.GetBytes((short)y);
+
+
+            mouseMoveRelPacketListInt.Add((byte)(bytesx[0]));
+            mouseMoveRelPacketListInt.Add((byte)(bytesx[1]));
+            mouseMoveRelPacketListInt.Add((byte)(bytesy[0]));
+            mouseMoveRelPacketListInt.Add((byte)(bytesy[1]));
+            mouseMoveRelPacketListInt.Add(0x00);
             mouseMoveRelPacketListInt.Add(0x00);
 
-            byte[] mouseMoveRelPacket = createPacketArray(mouseMoveRelPacketListInt, true);
+            byte[] mouseMoveRelPacket = createPacketArray(mouseMoveRelPacketListInt, false);
             sendPacket(mouseMoveRelPacket);
         }
 
@@ -547,7 +508,7 @@ namespace CH9329NameSpace
         /// <summary>
         /// mouseButtonUpPacket
         /// </summary>
-        byte[] mouseButtonUpPacketForMac = { 0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
+        byte[] mouseButtonUpPacketForMac = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         public void mouseButtonDownForMac(MouseButtonCode buttonCode)
         {
@@ -556,10 +517,10 @@ namespace CH9329NameSpace
             // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01}
             // CMD = 0x05 : USB mouse relative mode
             // ========================
-            List<int> mouseButtonDownPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 };
-            mouseButtonDownPacketListInt[6] = (int)buttonCode;
+            List<int> mouseButtonDownPacketListInt = new List<int> { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            mouseButtonDownPacketListInt[4] = (int)buttonCode;
 
-            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, true);
+            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, false);
             sendPacket(mouseButtonDownPacket);
 
         }
@@ -569,10 +530,29 @@ namespace CH9329NameSpace
             sendPacket(mouseButtonUpPacketForMac);
         }
 
+        public void mouseScrollForMac(int value)
+        {
+            // ========================
+            // mouseClickPacketContents
+            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01}
+            // CMD = 0x05 : USB mouse relative mode
+            // ========================
+            List<int> mouseButtonDownPacketListInt = new List<int> { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            byte[] bytes = BitConverter.GetBytes((short)value);
+            mouseButtonDownPacketListInt[9] = bytes[0];
+            mouseButtonDownPacketListInt[10] = bytes[1];
+            mouseButtonDownPacketListInt[4] = (int)MouseButtonCode.MIDDLE;
+
+            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, false);
+            sendPacket(mouseButtonDownPacket);
+
+        }
+
+
         /// <summary>
         /// mouseButtonUpPacket
         /// </summary>
-        byte[] mouseButtonUpPacket = { 0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x0D };
+        byte[] mouseButtonUpPacket = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         public void mouseButtonDown(MouseButtonCode buttonCode)
         {
@@ -581,10 +561,10 @@ namespace CH9329NameSpace
             // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x05} + LEN{0x05} + DATA{0x01}
             // CMD = 0x05 : USB mouse relative mode
             // ========================
-            List<int> mouseButtonDownPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00 };
-            mouseButtonDownPacketListInt[6] = (int)buttonCode;
+            List<int> mouseButtonDownPacketListInt = new List<int> { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            mouseButtonDownPacketListInt[4] = (int)buttonCode;
 
-            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, true);
+            byte[] mouseButtonDownPacket = createPacketArray(mouseButtonDownPacketListInt, false);
             sendPacket(mouseButtonDownPacket);
 
         }
@@ -618,103 +598,18 @@ namespace CH9329NameSpace
             if (scrollCount < -128) { scrollCount = -128; };
             if (scrollCount < 0) { scrollCount = 0x100 + scrollCount; };
 
-            List<int> mouseScrollPacketListInt = new List<int> { 0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00 };
-            mouseScrollPacketListInt.Add(scrollCount);
+            List<int> mouseScrollPacketListInt = new List<int> { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-            byte[] mouseScrollPacket = createPacketArray(mouseScrollPacketListInt, true);
+            short value = (short)scrollCount;
+            byte[] bytes = BitConverter.GetBytes(value);
+
+            mouseScrollPacketListInt.Add(bytes[1]);
+            mouseScrollPacketListInt.Add(bytes[0]);
+
+            byte[] mouseScrollPacket = createPacketArray(mouseScrollPacketListInt, false);
             return sendPacket(mouseScrollPacket);
 
         }
 
     }
-
-    public enum SpecialKeyCode : byte
-    {
-        ENTER = 0x28,
-        ESCAPE = 0x29,
-        BACKSPACE = 0x2A,
-        TAB = 0x2B,
-        SPACEBAR = 0x2C,
-        CAPS_LOCK = 0x39,
-        F1 = 0x3A,
-        F2 = 0x3B,
-        F3 = 0x3C,
-        F4 = 0x3D,
-        F5 = 0x3E,
-        F6 = 0x3F,
-        F7 = 0x40,
-        F8 = 0x41,
-        F9 = 0x42,
-        F10 = 0x43,
-        F11 = 0x44,
-        F12 = 0x45,
-        PRINTSCREEN = 0x46,
-        SCROLL_LOCK = 0x47,
-        PAUSE = 0x48,
-        INSERT = 0x49,
-        HOME = 0x4A,
-        PAGEUP = 0x4B,
-        DELETE = 0x4C,
-        END = 0x4D,
-        PAGEDOWN = 0x4E,
-        RIGHTARROW = 0x4F,
-        LEFTARROW = 0x50,
-        DOWNARROW = 0x51,
-        UPARROW = 0x52,
-        APPLICATION = 0x65,
-        LEFT_CTRL = 0xE0,
-        LEFT_SHIFT = 0xE1,
-        LEFT_ALT = 0xE2,
-        LEFT_WINDOWS = 0xE3,
-
-        RIGHT_CTRL = 0xE4,
-        RIGHT_SHIFT = 0xE5,
-        RIGHT_ALT = 0xE6,
-        RIGHT_WINDOWS = 0xE7,
-
-        CTRL = 0xE4,
-        SHIFT = 0xE5,
-        ALT = 0xE6,
-        WINDOWS = 0xE7,
-
-    }
-
-    public enum MouseButtonCode : byte
-    {
-        LEFT = 0x01,
-        RIGHT = 0x02,
-        MIDDLE = 0x04,
-    }
-    /// <summary>
-    /// KeyGroup
-    /// </summary>
-    public enum KeyGroup : byte
-    {
-        CharKey = 0x02,
-        MediaKey = 0x03,
-    }
-
-    public enum CommandCode : byte
-    {
-        GET_INFO = 0x01,
-        SEND_KB_GENERAL_DATA = 0x02,
-        SEND_KB_MEDIA_DATA = 0x03,
-        SEND_MS_ABS_DATA = 0x04,
-        SEND_MS_REL_DATA = 0x05,
-        READ_MY_HID_DATA = 0x07,
-        GET_PARA_CFG = 0x08,
-        GET_USB_STRING = 0x0A,
-    }
-    public enum mediaKey
-    {
-        EJECT,
-        CDSTOP,
-        PREVTRACK,
-        NEXTTRACK,
-        PLAYPAUSE,
-        MUTE,
-        VOLUMEDOWN,
-        VOLUMEUP,
-    }
-
 }

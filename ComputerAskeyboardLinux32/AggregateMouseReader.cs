@@ -33,7 +33,11 @@ namespace ComputerAsKeyboardInterface
 
         private void ReaderOnOnMouseMove(MouseEvent e)
         {
-            OnMouseMove?.Invoke(e);
+            if (OnMouseMove != null)
+            {
+                OnMouseMove.Invoke(e);
+            }
+
         }
 
         public void Dispose()

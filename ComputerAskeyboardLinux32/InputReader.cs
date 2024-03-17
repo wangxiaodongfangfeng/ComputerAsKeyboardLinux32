@@ -24,7 +24,10 @@ public class InputReader : IDisposable
     {
         _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         this._path = path;
-        Task.Run(new Action(Run));
+
+        new Task(new Action(Run)).Start();
+
+        //Task.Run(new Action(Run));
     }
 
     private void Run()
@@ -50,7 +53,10 @@ public class InputReader : IDisposable
                 case EventType.EV_REL:
                     var axis = (MouseAxis)code;
                     var e = new MouseMoveEvent(axis, value);
-                    OnMouseMove?.Invoke(e);
+                    if(OnMouseMove!=null)
+                    {
+                        OnMouseMove.Invoke(e);
+                    }
                     break;
             }
         }
@@ -62,7 +68,10 @@ public class InputReader : IDisposable
         var s = (KeyState)value;
         var e = new KeyPressEvent(c, s);
         e.DevicePath = this._path;
-        OnKeyPress?.Invoke(e);
+        if (OnKeyPress != null)
+        {
+            OnKeyPress.Invoke(e);
+        }
     }
 
     public void Dispose()

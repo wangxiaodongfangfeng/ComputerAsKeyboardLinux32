@@ -166,7 +166,7 @@ public class Program
                         WriteLogOnScreen("ttyUSB devices:");
                         foreach (var device in ttyUSBDevices)
                         {
-                            WriteLogOnScreen($"{++index}.{device}");
+                            WriteLogOnScreen(string.Format("{0}.{1}",++index,device));
                         }
                         var code = 0;
 
@@ -177,7 +177,8 @@ public class Program
                             var codeStr = Console.ReadLine();
                             if (codeStr != null)
                             {
-                                code = int.TryParse(codeStr, out int result) ? result : 0;
+                                var result = 0;
+                                code = int.TryParse(codeStr, out result) ? result : 0;
                             }
                         }
                         choosedDevice = devices[code - 1];
@@ -187,15 +188,12 @@ public class Program
                 catch (Exception ex)
                 {
                     // Handle any exceptions that may occur
-                    WriteLogOnScreen($"An error occurred: {ex.Message}");
+                    WriteLogOnScreen(string.Format("An error occurred: {0}",ex.Message));
                 }
             }
-            WriteLogOnScreen($"device is {choosedDevice}");
+            WriteLogOnScreen(String.Format("device is {0}",choosedDevice));
             using (AggregateInputReader aggHandler = new AggregateInputReader())
             {
-
-
-
                 if (File.Exists(choosedDevice))
                 {
                     ch9328 = new CH9329(PortName: choosedDevice);
@@ -210,13 +208,13 @@ public class Program
 
                 watcher.Created += (sender, e) =>
                 {
-                    WriteLogOnScreen($"File created:{e.FullPath}");
+                    WriteLogOnScreen(string.Format("File created:{0}",e.FullPath));
                     try
                     {
                         if (e.FullPath.Contains("ttyUSB"))
                         {
                             ch9328 = new CH9329(PortName: e.FullPath);
-                            WriteLogOnScreen($"ConnectToAnother:{e.FullPath}");
+                            WriteLogOnScreen(String.Format("ConnectToAnother:{0}",e.FullPath));
                             device_disconnected = false;
                         }
                     }
@@ -228,7 +226,7 @@ public class Program
                 };
                 watcher.Deleted += (sender, e) =>
                 {
-                    WriteLogOnScreen($"File Deleted:{e.FullPath}");
+                    WriteLogOnScreen(string.Format("File Deleted:{0}",e.FullPath));
                     if (e.FullPath == choosedDevice)
                     {
                         WriteLogOnScreen("Device is removed , can't use now");
@@ -240,7 +238,7 @@ public class Program
                 {
                     if (!mute)
                     {
-                        WriteLogOnScreen($"Code:{e.Code} State:{e.State},Event:{e.DevicePath}");
+                        WriteLogOnScreen(String.Format("Code:{0} State:{1},Event:{2}",e.Code,e.State,e.DevicePath));
                     }
                     // take no action when toggle is off
                     if (!toggle || device_disconnected)
@@ -277,7 +275,8 @@ public class Program
                         }
                         else
                         {
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out var value))
+                            byte value = 0;
+                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value))
                             {
                                 if (IsSpecialKey(keyCode))
                                 {
@@ -285,7 +284,7 @@ public class Program
                                 }
                                 else
                                 {
-                                    ch9328?.keyDown(CH9329.KeyGroup.CharKey, (byte)controlByte, value);
+                                    ch9328.keyDown(KeyGroup.CharKey, (byte)controlByte, value);
                                     individual_special_key = false;
                                     if (controlByte == 0x01 && keyCode == EventCode.Compose)
                                     {
@@ -297,23 +296,26 @@ public class Program
                     }
                     else
                     {
-                        if (specialKeyMap.TryGetValue(keyCode, out byte value))
+                        byte value = 0;
+                        byte value1 = 0;
+                        if (specialKeyMap.TryGetValue(keyCode, out value))
                         {
                             controlByte -= value;
                         }
                         if (IsSpecialKey(keyCode) && individual_special_key)
                         {
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out var value1))
+                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value1))
                             {
-                                ch9328?.keyDown(CH9329.KeyGroup.CharKey, 0x00, value1);
+                                ch9328.keyDown(KeyGroup.CharKey, 0x00, value1);
                             }
                         }
-                        ch9328?.keyUpAll();
+                        ch9328.keyUpAll();
 
                     }
-                    if (e.State is KeyState.KeyDown)
+                    if (e.State == KeyState.KeyDown)
                     {
-                        if (specialKeyMap.TryGetValue(keyCode, out byte value))
+                        byte value = 0;
+                        if (specialKeyMap.TryGetValue(keyCode, out value))
                         {
                             controlByte += value;
                         }
@@ -325,7 +327,7 @@ public class Program
                     if (e.Code == EventCode.Prog1 && e.State == KeyState.KeyUp)
                     {
                         toggle = !toggle;
-                        WriteLogOnScreen($"Toggle is {(toggle ? "on" : "off")} now");
+                        WriteLogOnScreen(String.Format("Toggle is {0} now", (toggle? "on":"off")));
                     }
                 };
                 //handle mute event, we don't like log to be printed
@@ -334,26 +336,26 @@ public class Program
                     if (e.Code == EventCode.Mute && e.State == KeyState.KeyUp)
                     {
                         mute = !mute;
-                        WriteLogOnScreen($"Log is {(mute ? "on" : "off")} now");
+                        WriteLogOnScreen(String.Format("Log is {0} now", (mute? "on":"off")));
                     }
                 };
 
-                var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
+                var mouseReader = new MouseReader( String.Format("/dev/input/{0}",mouseDevice));
                 mouseReader.OnMouseMove += (e) =>
                 {
                     if (MouseKeyHold)
                     {
-                        ch9328?.mouseMoveRel(e.X, e.Y, true, HoldMouseKey);
+                        ch9328.mouseMoveRel(e.X, e.Y, true, HoldMouseKey);
                     }
                     else
                     {
-                        ch9328?.mouseMoveRel(e.X, e.Y);
+                        ch9328.mouseMoveRel(e.X, e.Y);
                     }
                 };
 
                 System.Console.CancelKeyPress += (sender, eventArgs) =>
                 {
-                    ch9328?.keyUpAll();
+                    ch9328.keyUpAll();
                 };
                 while (true)
                 {
@@ -363,7 +365,7 @@ public class Program
                         break;
                     }
                 }
-                ch9328?.keyUpAll();
+                ch9328.keyUpAll();
             }
         }
     }
@@ -372,35 +374,36 @@ public class Program
     /// </summary>
     private static bool MouseKeyHold { get; set; }
 
-    private static CH9329.MouseButtonCode HoldMouseKey { get; set; }
+    private static MouseButtonCode HoldMouseKey { get; set; }
     private static void HandleMouseKey(KeyPressEvent e, bool macos)
     {
-        CH9329.MouseButtonCode mouse = CH9329.MouseButtonCode.LEFT;
+        if (ch9328 == null)
+            return;
+
+        MouseButtonCode mouse = MouseButtonCode.LEFT;
         switch (e.Code)
         {
             case EventCode.LeftMouse:
-                mouse = CH9329.MouseButtonCode.LEFT;
+                mouse = MouseButtonCode.LEFT;
                 break;
             case EventCode.RightMouse:
-                mouse = CH9329.MouseButtonCode.RIGHT;
+                mouse = MouseButtonCode.RIGHT;
                 break;
             case EventCode.MiddleMouse:
-                mouse = CH9329.MouseButtonCode.MIDDLE;
+                mouse = MouseButtonCode.MIDDLE;
                 break;
         }
-
-
         if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
         {
-            if (macos) { ch9328?.mouseButtonDownForMac(mouse); }
-            else { ch9328?.mouseButtonDown(mouse); }
+            if (macos) { ch9328.mouseButtonDownForMac(mouse); }
+            else { ch9328.mouseButtonDown(mouse); }
             MouseKeyHold = true;
             HoldMouseKey = mouse;
         }
         else
         {
-            if (macos) { ch9328?.mouseButtonUpAllForMac(); }
-            else { ch9328?.mouseButtonUpAll(); }
+            if (macos) { ch9328.mouseButtonUpAllForMac(); }
+            else { ch9328.mouseButtonUpAll(); }
             MouseKeyHold = false;
             HoldMouseKey = mouse;
         }
@@ -416,22 +419,25 @@ public class Program
     /// <param name="keyState"></param>
     public static void HandleBackAndFowardForMacOS(EventCode code, KeyState keyState)
     {
+        if (ch9328 == null)
+            return;
         if (keyState == KeyState.KeyDown)
         {
             var value = code == EventCode.Back ? 0x50 : 0x4F;
             //send Ctrl+<- or Ctrl + ->
-            ch9328?.keyDown(CH9329.KeyGroup.CharKey, (byte)0x01, (byte)value);
+            ch9328.keyDown(KeyGroup.CharKey, (byte)0x01, (byte)value);
         }
         else
         {
-            ch9328?.keyUpAll();
+            ch9328.keyUpAll();
         }
-
     }
-    private static void ToggleKeys(List<List<char>> chars, (int, int, int, int) values)
+    private static void ToggleKeys(List<List<char>> chars, Tuple<int, int, int, int> values)
     {
-
-        var (sr, sc, er, ec) = values;
+        var sr = values.Item1;
+        var sc = values.Item2;
+        var er = values.Item3;
+        var ec = values.Item4;
         Console.BackgroundColor = ConsoleColor.DarkCyan;
         for (var i = sr; i <= er; i++)
         {
@@ -453,33 +459,20 @@ public class Program
             }
         }
     }
-
-
     private static readonly Queue<string> logs = new Queue<string>();
-
     private static void WriteLogOnScreen(string log)
     {
-
         if (logs.Count >= 5)
         {
             logs.Dequeue();
         }
-
         logs.Enqueue(log);
-
         var index = 0;
-
         foreach (var content in logs)
         {
-            if (content == null)
-            {
-                throw new ArgumentNullException(nameof(content));
-            }
-
             Console.SetCursorPosition(0, 28 + (++index));
             Console.WriteLine(content);
-
         }
-
     }
 }
+

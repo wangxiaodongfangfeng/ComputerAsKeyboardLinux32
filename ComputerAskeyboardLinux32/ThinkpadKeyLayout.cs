@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using System;
 
 public class ThinkpadKeyLayout
 {
@@ -59,10 +60,10 @@ public class ThinkpadKeyLayout
             };
     }
 
-    public (int, int, int, int) FindKeyPositions(EventCode code)
+    public Tuple<int, int, int, int> FindKeyPositions(EventCode code)
     {
         int row = keyLayout.FindIndex(r => r.Contains(code));
-        if (row < 0) { return (0, 0, 0, 0); }
+        if (row < 0) { return new Tuple<int, int, int, int>(0, 0, 0, 0); }
         int column = keyLayout[row].FindIndex(c => c == code);
 
         switch (row)
@@ -81,7 +82,7 @@ public class ThinkpadKeyLayout
             case 6:
                 return SeventhRowPosition(column);
             default:
-                return (0, 0, 0, 0);
+                return new Tuple<int, int, int, int>(0, 0, 0, 0);
         }
 
     }
@@ -92,16 +93,16 @@ public class ThinkpadKeyLayout
     /// <param name="rowIndex"></param>
     /// <param name="keyIndex"></param>
     /// <returns></returns>
-    public (int, int, int, int) FirstTwoRowPosition(int rowIndex, int keyIndex)
+    public Tuple<int, int, int, int> FirstTwoRowPosition(int rowIndex, int keyIndex)
     {
         int startColumn = keyIndex * 7 + (keyIndex / 3) * 3;
         int startRow = rowIndex * 3 + 2;
         int endColomn = startColumn + 6;
         int endRow = startRow + 1;
-        return (startRow, startColumn, endRow, endColomn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColomn);
     }
 
-    public (int, int, int, int) ThirdRowPosition(int keyIndex)
+    public Tuple<int, int, int, int> ThirdRowPosition(int keyIndex)
     {
         int startColumn = keyIndex * 8;
         int startRow = 8;
@@ -111,9 +112,9 @@ public class ThinkpadKeyLayout
         {
             endColomn = 116;
         }
-        return (startRow, startColumn, endRow, endColomn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColomn);
     }
-    public (int, int, int, int) FourthRowPosition(int keyIndex)
+    public Tuple<int, int, int, int> FourthRowPosition(int keyIndex)
     {
         int startColumn = keyIndex * 8;
         if (keyIndex > 0)
@@ -131,9 +132,9 @@ public class ThinkpadKeyLayout
         {
             endColomn = 116;
         }
-        return (startRow, startColumn, endRow, endColomn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColomn);
     }
-    public (int, int, int, int) FifthRowPosition(int keyIndex)
+    public Tuple<int, int, int, int> FifthRowPosition(int keyIndex)
     {
         int startColumn = keyIndex * 8;
         if (keyIndex > 0)
@@ -151,9 +152,9 @@ public class ThinkpadKeyLayout
         {
             endColomn = 116;
         }
-        return (startRow, startColumn, endRow, endColomn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColomn);
     }
-    public (int, int, int, int) SixthRowPosition(int keyIndex)
+    public Tuple<int, int, int, int> SixthRowPosition(int keyIndex)
     {
         int startColumn = keyIndex * 8;
         if (keyIndex > 0)
@@ -171,9 +172,9 @@ public class ThinkpadKeyLayout
         {
             endColomn = 116;
         }
-        return (startRow, startColumn, endRow, endColomn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColomn);
     }
-    public (int, int, int, int) SeventhRowPosition(int keyIndex)
+    public Tuple<int, int, int, int> SeventhRowPosition(int keyIndex)
     {
         int startRow = 24;
         int endRow = startRow + 2;
@@ -248,7 +249,7 @@ public class ThinkpadKeyLayout
                 break;
         }
 
-        return (startRow, startColumn, endRow, endColumn);
+        return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColumn);
 
     }
 }

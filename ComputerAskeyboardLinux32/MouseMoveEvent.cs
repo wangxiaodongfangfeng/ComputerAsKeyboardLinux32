@@ -7,8 +7,8 @@ public class MouseMoveEvent : EventArgs
         Axis = axis;
         Amount = amount;
     }
-    
-    public MouseAxis Axis { get; }
-    
+
+    public MouseAxis Axis { get; set; }
+
     public int Amount { get; set; }
 }

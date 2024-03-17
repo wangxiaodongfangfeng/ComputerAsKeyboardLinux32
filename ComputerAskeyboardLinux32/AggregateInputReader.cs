@@ -5,9 +5,7 @@ using System.IO;
 public class AggregateInputReader : IDisposable
 {
     private List<InputReader> _readers = new List<InputReader>();
-
     public event InputReader.RaiseKeyPress OnKeyPress;
-
     public event InputReader.RaiseMouseMove OnMouseMove;
 
 
@@ -16,11 +14,8 @@ public class AggregateInputReader : IDisposable
         foreach (var file in events)
         {
             var reader = new InputReader(file);
-
             reader.OnKeyPress += ReaderOnOnKeyPress;
-
             reader.OnMouseMove += ReaderOnOnMouseMove;
-
             _readers.Add(reader);
         }
     }
@@ -28,27 +23,29 @@ public class AggregateInputReader : IDisposable
     public AggregateInputReader()
     {
         var files = Directory.GetFiles("/dev/input/", "event*");
-
         foreach (var file in files)
         {
             var reader = new InputReader(file);
-
             reader.OnKeyPress += ReaderOnOnKeyPress;
-
             reader.OnMouseMove += ReaderOnOnMouseMove;
-
             _readers.Add(reader);
         }
     }
 
     private void ReaderOnOnKeyPress(KeyPressEvent e)
     {
-        OnKeyPress?.Invoke(e);
+        if(this.OnKeyPress!=null)
+        {
+            OnKeyPress.Invoke(e);
+        }
     }
 
     private void ReaderOnOnMouseMove(MouseMoveEvent e)
     {
-        OnMouseMove?.Invoke(e);
+        if(OnMouseMove!=null)
+        {
+            OnMouseMove.Invoke(e);
+        }
     }
 
     public void Dispose()
@@ -58,7 +55,6 @@ public class AggregateInputReader : IDisposable
             d.OnKeyPress -= ReaderOnOnKeyPress;
             d.Dispose();
         }
-
         _readers = null;
     }
 }

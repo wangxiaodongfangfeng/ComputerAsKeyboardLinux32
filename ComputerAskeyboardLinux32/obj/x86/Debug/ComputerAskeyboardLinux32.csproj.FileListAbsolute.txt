@@ -1,0 +1,8 @@
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\bin\Debug\ComputerAskeyboardLinux32.exe.config
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\bin\Debug\ComputerAskeyboardLinux32.exe
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\bin\Debug\ComputerAskeyboardLinux32.pdb
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\bin\Debug\PowerArgs.dll
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\bin\Debug\PowerArgs.xml
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\obj\x86\Debug\ComputerAskeyboardLinux32.exe
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\obj\x86\Debug\ComputerAskeyboardLinux32.pdb
+C:\Users\Administrator\Documents\project\ComputerAsKeyboardLinux32\ComputerAskeyboardLinux32\obj\x86\Debug\ComputerAskeyboardLinux32.csprojResolveAssemblyReference.cache
