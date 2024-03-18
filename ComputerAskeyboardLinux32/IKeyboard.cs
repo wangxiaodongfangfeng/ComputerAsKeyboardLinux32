@@ -31,5 +31,6 @@ namespace ComputerAskeyboardLinux32
         void keyUpAll(KeyGroup keyGroup);
         void keyUpAll();
         void mouseScrollForMac(int value);
+        void charKeyType(string typeString);
     }
 }
