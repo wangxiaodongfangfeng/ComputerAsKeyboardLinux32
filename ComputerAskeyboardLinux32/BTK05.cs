@@ -339,6 +339,9 @@ namespace BTK05Namespace
             {
                 serialPort.Write(data, 0, data.Length);
                 Thread.Sleep(20);
+            }
+            lock (lockObject)
+            {
                 string resultMessage = serialPort.ReadExisting();
 
                 addMessageLog(data.ToString() + "|" + resultMessage);
