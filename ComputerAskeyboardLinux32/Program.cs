@@ -55,6 +55,8 @@ public class Program
 
     private static IKeyboard ch9328;
 
+    private static string Password { get; set; }
+
     private static readonly Dictionary<EventCode, byte> specialKeyMap = new Dictionary<EventCode, byte>();
 
     private static bool IsSpecialKeyHold(byte specialKeys)
@@ -83,6 +85,7 @@ public class Program
         var thinkpadKey = new ThinkpadKeyMapTo9329();
         var thinkpadLayout = new ThinkpadKeyLayout();
         var controlByte = 0x00;
+        Password = "Xinyuan@199109062337";
 
         var choosedDevice = "/dev/ttyUSB0";
         // Path to the directory where ttyUSB devices are located
@@ -131,6 +134,8 @@ public class Program
         using (AggregateInputReader aggHandler1 = new AggregateInputReader())
         {
             WriteLogOnScreen("This is a test log ");
+
+            #region ToggleKeyImplementation
             aggHandler1.OnKeyPress += (e) =>
             {
                 if (e.State == KeyState.KeyUp)
@@ -138,7 +143,9 @@ public class Program
                     ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
                 }
             };
+            #endregion
 
+            #region AutoScan Region
             if (parsedArgs.AutoScan)
             {
                 try
@@ -173,13 +180,18 @@ public class Program
                     WriteLogOnScreen(string.Format("An error occurred: {0}", ex.Message));
                 }
             }
+            #endregion
+
             WriteLogOnScreen(String.Format("device is {0}", choosedDevice));
+
             using (AggregateInputReader aggHandler = new AggregateInputReader())
             {
                 if (File.Exists(choosedDevice))
                 {
                     ch9328 = GenerateKeyboard(bluetooth, choosedDevice);
                 }
+
+                #region WatchFileChange auto detect serial port
 
                 var watcher = new FileSystemWatcher(ttyUSBDirectory)
                 {
@@ -215,6 +227,8 @@ public class Program
                         device_disconnected = true;
                     }
                 };
+                #endregion
+
                 bool individual_special_key = false;
                 aggHandler.OnKeyPress += (KeyPressEvent e) =>
                 {
@@ -235,6 +249,7 @@ public class Program
                         HandleBackAndFowardForMacOS(keyCode, e.State);
                         return;
                     }
+
                     if (e.Code == EventCode.LeftMouse || e.Code == EventCode.RightMouse || e.Code == EventCode.MiddleMouse)
                     {
                         HandleMouseKey(e, switch_alt);
@@ -249,6 +264,23 @@ public class Program
 
                     if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
                     {
+                        #region HandleAutoInputPassword When Ctrl+F1 Happen
+                        if (e.Code == EventCode.F1 && controlByte == 0x01)
+                        {
+                            HandleInputPassword();
+                            return;
+                        }
+                        #endregion
+
+                        #region HandleAutoInputPassword When Ctrl+F1 Happen
+                        if (e.Code == EventCode.F2 && controlByte == 0x01)
+                        {
+                            FunctionForSetPassword();
+                            return;
+                        }
+                        #endregion
+
+
                         //when a specialkey is down ,we can't send another speclial
                         // key as an individual key, we have to wait other nospecial key 
                         if (IsSpecialKeyHold((byte)controlByte) && IsSpecialKey(keyCode))
@@ -303,6 +335,8 @@ public class Program
                         }
                     }
                 };
+
+                #region handle toggle
                 //handle toggle event ,sometime ,we want to turn off the keyboard
                 aggHandler.OnKeyPress += (e) =>
                 {
@@ -312,6 +346,9 @@ public class Program
                         WriteLogOnScreen(String.Format("Toggle is {0} now", (toggle ? "on" : "off")));
                     }
                 };
+                #endregion
+
+                #region handle mute
                 //handle mute event, we don't like log to be printed
                 aggHandler.OnKeyPress += (e) =>
                 {
@@ -321,6 +358,8 @@ public class Program
                         WriteLogOnScreen(String.Format("Log is {0} now", (mute ? "on" : "off")));
                     }
                 };
+
+                #endregion
 
                 var mouseReader = new MouseReader(String.Format("/dev/input/{0}", mouseDevice));
                 mouseReader.OnMouseMove += (e) =>
@@ -467,6 +506,37 @@ public class Program
     private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
     {
         return bluetooth ? (IKeyboard)new BTK05Namespace.BTK05(port) : (IKeyboard)new CH9329(port);
+    }
+
+    private static void FunctionForSetPassword()
+    {
+        Console.Clear();
+        Console.CursorVisible = true;
+        Console.SetCursorPosition(0, 0);
+        Console.WriteLine("Please Input Your Password");
+        Password = Console.ReadLine();
+        Console.WriteLine(string.Format("Your password is {0}, Confirm? (Y/n)", Password));
+        string input = Console.ReadLine();
+        if (input == "n")
+        {
+            FunctionForSetPassword();
+        }
+        WriteKeyboardOnScreen();
+        return;
+    }
+    private static void WriteKeyboardOnScreen()
+    {
+        Console.CursorVisible = false; //hide 
+        Console.Clear(); //
+        Console.WriteLine(keyboardLayout);
+    }
+
+    private static void HandleInputPassword()
+    {
+        if (ch9328 != null)
+        {
+            ch9328.charKeyType(Password);
+        }
     }
 }
 
