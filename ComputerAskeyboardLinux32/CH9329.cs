@@ -243,7 +243,7 @@ namespace CH9329NameSpace
             charKeyTable.Add("SPACEBAR", new byte[] { 0x00, 0x2C });    //005
             charKeyTable.Add("-", new byte[] { 0x00, 0x2D });   //006
             charKeyTable.Add("^", new byte[] { 0x00, 0x2E });   //007
-            charKeyTable.Add("@", new byte[] { 0x00, 0x2F });   //008
+            charKeyTable.Add("@", new byte[] { 0x02, 0x1F });   //008
             charKeyTable.Add("[", new byte[] { 0x00, 0x30 });   //009
             charKeyTable.Add("-----", new byte[] { 0x00, 0x31 });   //010
             charKeyTable.Add("]", new byte[] { 0x00, 0x32 });   //011

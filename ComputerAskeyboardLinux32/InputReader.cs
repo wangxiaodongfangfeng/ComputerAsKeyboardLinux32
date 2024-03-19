@@ -11,27 +11,33 @@ public class InputReader : IDisposable
     public event RaiseKeyPress OnKeyPress;
     public event RaiseMouseMove OnMouseMove;
 
-    private const int BufferLength = 16;
+    private int BufferLength = 16;
 
-    private readonly byte[] _buffer = new byte[BufferLength];
+    private byte[] _buffer;
 
     private FileStream _stream;
     private bool _disposing;
 
     private string _path = "";
 
+    private bool Platform64
+    {
+        get { return BitConverter.GetBytes((long)(16)).Length == 8; }
+    }
+
     public InputReader(string path)
     {
+        BufferLength = Platform64 ? 24 : 16;
+        _buffer = new byte[BufferLength];
         _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         this._path = path;
-
         new Task(new Action(Run)).Start();
-
         //Task.Run(new Action(Run));
     }
 
     private void Run()
     {
+        var offset = _buffer.Length == 24 ? 15 : 7;
         while (true)
         {
             if (_disposing)
@@ -39,9 +45,10 @@ public class InputReader : IDisposable
 
             _stream.Read(_buffer, 0, BufferLength);
 
-            var type = BitConverter.ToInt16(new[] { _buffer[8], _buffer[9] }, 0);
-            var code = BitConverter.ToInt16(new[] { _buffer[10], _buffer[11] }, 0);
-            var value = BitConverter.ToInt32(new[] { _buffer[12], _buffer[13], _buffer[14], _buffer[15] }, 0);
+            var type = BitConverter.ToInt16(new[] { _buffer[offset + 1], _buffer[offset + 2] }, 0);
+            var code = BitConverter.ToInt16(new[] { _buffer[offset + 3], _buffer[offset + 4] }, 0);
+            var value = BitConverter.ToInt32(
+                new[] { _buffer[offset + 5], _buffer[offset + 6], _buffer[offset + 7], _buffer[offset + 8] }, 0);
 
             var eventType = (EventType)type;
 
@@ -53,10 +60,11 @@ public class InputReader : IDisposable
                 case EventType.EV_REL:
                     var axis = (MouseAxis)code;
                     var e = new MouseMoveEvent(axis, value);
-                    if(OnMouseMove!=null)
+                    if (OnMouseMove != null)
                     {
                         OnMouseMove.Invoke(e);
                     }
+
                     break;
             }
         }
