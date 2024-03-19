@@ -33,4 +33,8 @@ public class StartArgs
     [ArgDescription("start-bluetooth-version")]
     [DefaultValue(false)]
     public bool Bluetooth { get; set; }
+    [ArgDescription("use fingerprint")]
+    [DefaultValue(false)]
+    public bool Fingerprint { get; set; }
+    
 }

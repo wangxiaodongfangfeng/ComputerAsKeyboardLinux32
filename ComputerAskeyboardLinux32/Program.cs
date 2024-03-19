@@ -55,7 +55,7 @@ public class Program
     private static bool device_disconnected = false;
     private static bool exit_in_next = false;
     private static IKeyboard ch9328;
-
+    private static bool _fingerPrint = false;
     private static bool CommandMode { get; set; }
 
     private static string Password { get; set; }
@@ -118,6 +118,7 @@ public class Program
             switch_alt = parsedArgs.MacOS;
             mouseDevice = parsedArgs.Mouse;
             bluetooth = parsedArgs.Bluetooth;
+            _fingerPrint = parsedArgs.Fingerprint;
         }
         catch (ArgException ex)
         {
@@ -594,18 +595,25 @@ public class Program
 
     private static void HandleInputPassword()
     {
+        if (!_fingerPrint)
+        {
+            if (ch9328 != null)
+                ch9328.charKeyType(Password);
+        }
+
         var attempts = 0;
         var finger = new FingerPrintHelper();
         var matched = false;
         while (attempts < 3)
         {
             matched = FingerPrintHelper.VerifyFinger("ford");
-           if (matched)
-           {
-               break;
-           }
-           attempts++;
+            if (matched)
+            {
+                break;
+            }
+            attempts++;
         }
+
         if (ch9328 != null && matched)
         {
             WriteLogOnScreen("Your fingerprint is matched");
