@@ -22,7 +22,7 @@ public class InputReader : IDisposable
 
     private bool Platform64
     {
-        get { return BitConverter.GetBytes((long)(16)).Length == 8; }
+        get { return Environment.Is64BitOperatingSystem; }
     }
 
     public InputReader(string path)

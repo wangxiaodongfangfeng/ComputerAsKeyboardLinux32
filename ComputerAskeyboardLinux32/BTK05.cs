@@ -16,8 +16,8 @@ namespace BTK05Namespace
         public int xSize;
         public int ySize;
 
-        SerialPort serialPort;
-        private object lockObject = new object();
+        readonly SerialPort serialPort;
+        private readonly object lockObject = new object();
         public Queue<string> MessageLog = new Queue<string>();
 
         public int MessageLogCount = 32;
@@ -340,13 +340,14 @@ namespace BTK05Namespace
                 serialPort.Write(data, 0, data.Length);
                 Thread.Sleep(20);
             }
-            lock (lockObject)
-            {
-                string resultMessage = serialPort.ReadExisting();
-
-                addMessageLog(data.ToString() + "|" + resultMessage);
-                return resultMessage;
-            }
+            // lock (lockObject)
+            // {
+            //     string resultMessage = serialPort.ReadExisting();
+            //
+            //     addMessageLog(data.ToString() + "|" + resultMessage);
+            //     return resultMessage;
+            // }
+            return "";
 
         }
 
@@ -360,12 +361,12 @@ namespace BTK05Namespace
         /// <summary>
         /// charKeyUpPacket
         /// </summary>
-        byte[] charKeyUpPacket = { 0x0C, 0x00, 0xA1, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        readonly byte[] charKeyUpPacket = { 0x0C, 0x00, 0xA1, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
         /// <summary>
         /// 
         /// mediaKeyUpPacket
         /// </summary>
-        byte[] mediaKeyUpPacket = { 0x57, 0xAB, 0x00, 0x03, 0x04, 0x02, 0x00, 0x00, 0x00, 0x0B };
+        readonly byte[] mediaKeyUpPacket = { 0x57, 0xAB, 0x00, 0x03, 0x04, 0x02, 0x00, 0x00, 0x00, 0x0B };
 
 
         /// <summary>
@@ -516,7 +517,7 @@ namespace BTK05Namespace
         /// <summary>
         /// mouseButtonUpPacket
         /// </summary>
-        byte[] mouseButtonUpPacketForMac = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        readonly byte[] mouseButtonUpPacketForMac = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         public void mouseButtonDownForMac(MouseButtonCode buttonCode)
         {
@@ -560,7 +561,7 @@ namespace BTK05Namespace
         /// <summary>
         /// mouseButtonUpPacket
         /// </summary>
-        byte[] mouseButtonUpPacket = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        readonly byte[] mouseButtonUpPacket = { 0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         public void mouseButtonDown(MouseButtonCode buttonCode)
         {
