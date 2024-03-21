@@ -1,7 +1,6 @@
 using System;
-using CH9329NameSpace;
 
-namespace ComputerAskeyboardLinux32
+namespace ComputerAsKeyboardLinux32
 {
     public class LogKeyboard:IKeyboard
     {

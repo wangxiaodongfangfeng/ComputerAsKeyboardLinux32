@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.Remoting.Channels;
 
-namespace ComputerAskeyboardLinux32
+namespace ComputerAsKeyboardLinux32
 {
     public class FingerPrintHelper
     {

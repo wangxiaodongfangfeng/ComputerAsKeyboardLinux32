@@ -54,6 +54,7 @@
     <Compile Include="EventType.cs" />
     <Compile Include="KeyState.cs" />
     <Compile Include="MouseMoveEvent.cs" />
+    <Compile Include="ScreenKeyboard.cs" />
     <Compile Include="ThinkpadKeyLayout.cs" />
     <Compile Include="ThinkpadKeyMapTo9329.cs" />
     <Compile Include="MouseEvent.cs" />

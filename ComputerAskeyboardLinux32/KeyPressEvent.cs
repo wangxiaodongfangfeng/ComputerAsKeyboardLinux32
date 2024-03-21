@@ -1,16 +1,19 @@
 using System;
 
-public class KeyPressEvent : EventArgs
+namespace ComputerAsKeyboardLinux32
 {
-    public KeyPressEvent(EventCode code, KeyState state)
+    public class KeyPressEvent : EventArgs
     {
-        this.Code = code;
-        this.State = state;
+        public KeyPressEvent(EventCode code, KeyState state)
+        {
+            this.Code = code;
+            this.State = state;
+        }
+
+        public string DevicePath { get; set; }
+
+        public EventCode Code { get; set; }
+
+        public KeyState State { get; set; }
     }
-
-    public string DevicePath { get; set; }
-
-    public EventCode Code { get; set; }
-
-    public KeyState State { get; set; }
 }

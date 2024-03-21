@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ComputerAsKeyboardInterface
+namespace ComputerAsKeyboardLinux32
 {
     public class MouseEvent : EventArgs
     {

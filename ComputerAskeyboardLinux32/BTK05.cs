@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.IO.Ports;
-using CH9329NameSpace;
-using ComputerAskeyboardLinux32;
-namespace BTK05Namespace
+using System.Linq;
+using System.Threading;
+
+namespace ComputerAsKeyboardLinux32
 {
     public class BTK05 : IKeyboard
     {

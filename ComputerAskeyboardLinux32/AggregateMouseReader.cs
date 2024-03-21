@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace ComputerAsKeyboardInterface
+namespace ComputerAsKeyboardLinux32
 {
     public class AggregateMouseReader : IDisposable
     {

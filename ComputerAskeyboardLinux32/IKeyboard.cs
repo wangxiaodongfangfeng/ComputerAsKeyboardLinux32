@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CH9329NameSpace;
 
-namespace ComputerAskeyboardLinux32
+namespace ComputerAsKeyboardLinux32
 {
     public interface IKeyboard
     {

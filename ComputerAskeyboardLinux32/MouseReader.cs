@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ComputerAsKeyboardInterface
+namespace ComputerAsKeyboardLinux32
 {
     public class MouseReader : IDisposable
     {
