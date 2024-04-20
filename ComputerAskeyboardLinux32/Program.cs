@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using PowerArgs;
 using ComputerAsKeyboardLinux32;
@@ -25,6 +26,10 @@ public static class Program
     private static readonly Dictionary<EventCode, byte> SpecialKeyMap = new Dictionary<EventCode, byte>();
 
     private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new Dictionary<EventCode, bool>();
+
+    private static bool _bluetooth = false;
+
+    private static string _currentPort = "/dev/ttyUSB0";
 
     private static int ControlBytes
     {
@@ -160,6 +165,8 @@ public static class Program
                 if (File.Exists(choosedDevice))
                 {
                     _keyboard = GenerateKeyboard(bluetooth, choosedDevice);
+                    _bluetooth = bluetooth;
+                    _currentPort = choosedDevice;
                 }
 
                 #region WatchFileChange auto detect serial port
@@ -178,8 +185,11 @@ public static class Program
                     WriteLogOnScreen(string.Format("File created:{0}", e.FullPath));
                     try
                     {
-                        if (!e.FullPath.Contains("ttyUSB")) return;
+                        if (!(e.FullPath.Contains("ttyUSB") || e.FullPath.Contains("rfcomm"))) return;
+                        _keyboard.Dispose();
                         _keyboard = GenerateKeyboard(bluetooth, e.FullPath);
+                        _bluetooth = bluetooth;
+                        _currentPort = e.FullPath;
                         WriteLogOnScreen(String.Format("ConnectToAnother:{0}", e.FullPath));
                         device_disconnected = false;
                     }
@@ -246,6 +256,12 @@ public static class Program
                                 return;
                             case EventCode.F2 when ControlBytes == 0x01:
                                 FunctionForSetPassword();
+                                return;
+                            case EventCode.F11 when ControlBytes == 0x01:
+                                HandleExitProgram();
+                                return;
+                            case EventCode.F10 when ControlBytes == 0x01:
+                                HandleRefreshKeyboard();
                                 return;
                         }
 
@@ -516,6 +532,23 @@ public static class Program
         return;
     }
 
+    private static void HandleExitProgram()
+    {
+        Environment.Exit(0);
+    }
+
+    /// <summary>
+    /// RefreshKeyboard
+    /// Sometime when the computer wake up from sleep
+    /// bluetooth will be disconnected.
+    /// we should reconnect the bluetooth by reopen the port
+    /// </summary>
+    private static void HandleRefreshKeyboard()
+    {
+        _keyboard.Dispose();
+        _keyboard = GenerateKeyboard(_bluetooth, _currentPort);
+        WriteLogOnScreen(String.Format("Refreshed the keyboard with {0},{1}", _bluetooth, _currentPort));
+    }
 
     private static void HandleInputPassword()
     {

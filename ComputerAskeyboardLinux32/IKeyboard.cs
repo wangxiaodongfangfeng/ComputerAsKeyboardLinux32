@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ComputerAsKeyboardLinux32
 {
-    public interface IKeyboard
+    public interface IKeyboard:IDisposable
     {
 
         void mouseButtonUpAll();

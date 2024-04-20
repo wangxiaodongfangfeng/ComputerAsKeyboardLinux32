@@ -51,5 +51,10 @@ namespace ComputerAsKeyboardLinux32
         public void charKeyType(string typeString)
         {
         }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
