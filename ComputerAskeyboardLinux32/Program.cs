@@ -282,6 +282,10 @@ public static class Program
                                 if (IsSpecialKey(keyCode))
                                 {
                                     individual_special_key = true;
+                                    if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value))
+                                    {
+                                        _keyboard.keyDown(KeyGroup.CharKey, 0x00, value);
+                                    }
                                 }
                                 else
                                 {
@@ -299,13 +303,13 @@ public static class Program
                             SpecialKeyStatus[keyCode] = false;
                         }
 
-                        if (IsSpecialKey(keyCode) && individual_special_key)
-                        {
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value1))
-                            {
-                                _keyboard.keyDown(KeyGroup.CharKey, 0x00, value1);
-                            }
-                        }
+                        // if (IsSpecialKey(keyCode) && individual_special_key)
+                        // {
+                        //     if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value1))
+                        //     {
+                        //         _keyboard.keyDown(KeyGroup.CharKey, 0x00, value1);
+                        //     }
+                        // }
 
                         _keyboard.keyUpAll();
                     }
