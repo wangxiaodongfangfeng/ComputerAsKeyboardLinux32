@@ -277,6 +277,7 @@ public static class Program
                         else
                         {
                             byte value = 0;
+                            List<byte> bytes;
                             if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value))
                             {
                                 if (IsSpecialKey(keyCode))
@@ -293,10 +294,19 @@ public static class Program
                                     individual_special_key = false;
                                 }
                             }
+                            else if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out bytes))
+                            {
+                                _keyboard.keyDown(KeyGroup.MediaKey, bytes[0], bytes[1], bytes[2], bytes[3]);
+                            }
                         }
                     }
                     else
                     {
+                        if (thinkpadKey.mediaKeyMap.ContainsKey((byte)keyCode))
+                        {
+                            _keyboard.keyUpAll(KeyGroup.MediaKey);
+                            return;
+                        }
                         byte value1 = 0;
                         if (SpecialKeyMap.ContainsKey(keyCode))
                         {

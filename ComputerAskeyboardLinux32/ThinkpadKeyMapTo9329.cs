@@ -6,9 +6,17 @@ namespace ComputerAsKeyboardLinux32
     public class ThinkpadKeyMapTo9329
     {
         public Dictionary<int, byte> keyMaps;
-
+        public Dictionary<int, List<byte>> mediaKeyMap;
         public ThinkpadKeyMapTo9329()
         {
+            mediaKeyMap.Add(113, new List<byte>() { 0x02, 0x04, 0x00, 0x00 }); //mute;
+            mediaKeyMap.Add(115, new List<byte>() { 0x02, 0x01, 0x00, 0x00 }); //V+
+            mediaKeyMap.Add(114, new List<byte>() { 0x02, 0x02, 0x00, 0x00 }); //V-;
+            mediaKeyMap.Add(164, new List<byte>() { 0x02, 0x08, 0x00, 0x00 }); //Pause; 
+            mediaKeyMap.Add(166, new List<byte>() { 0x02, 0x40, 0x00, 0x00 }); //Stop
+            mediaKeyMap.Add(163, new List<byte>() { 0x02, 0x10, 0x00, 0x00 }); //NextTrack;
+            mediaKeyMap.Add(165, new List<byte>() { 0x02, 0x20, 0x00, 0x00 }); //Previous;
+
             keyMaps = new Dictionary<int, byte>();
             keyMaps.Add(30, 0x04);//A
             keyMaps.Add(48, 0x05);//B
