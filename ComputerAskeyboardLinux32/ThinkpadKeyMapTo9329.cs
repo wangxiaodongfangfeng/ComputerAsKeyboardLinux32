@@ -9,6 +9,7 @@ namespace ComputerAsKeyboardLinux32
         public Dictionary<int, List<byte>> mediaKeyMap;
         public ThinkpadKeyMapTo9329()
         {
+            mediaKeyMap = new Dictionary<int, List<byte>>();
             mediaKeyMap.Add(113, new List<byte>() { 0x02, 0x04, 0x00, 0x00 }); //mute;
             mediaKeyMap.Add(115, new List<byte>() { 0x02, 0x01, 0x00, 0x00 }); //V+
             mediaKeyMap.Add(114, new List<byte>() { 0x02, 0x02, 0x00, 0x00 }); //V-;
