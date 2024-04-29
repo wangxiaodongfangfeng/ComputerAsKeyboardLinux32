@@ -6,43 +6,44 @@ namespace ComputerAsKeyboardLinux32
     public class ThinkpadKeyLayout
     {
         public const string KeyboardLayoutString = @"
---------------------------------------------------------------------------------------------------------------------
- ESC  │  MT  │  V-  │  V+  │   │  TV  │      │      │      │   │  IO  │ PRTSR│SCRLK │PAUSE │   │INSERT│ HOME │ PGUP │
-      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
-----------------------------   -----------------------------   -----------------------------   ----------------------
-  F1  │  F2  │  F3  │  F4  │   │  F5  │  F6  │  F7  │  F8  │   │  F9  │  FA  │  FB  │  FC  │   │DELETE│ END  │ PGDN │
-      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
-=====================================================================================================================
- ~     │ !     │ @     │ #     │  $    │ %     │ ^     │ &     │ *     │ (     │ )     │ _     │ +     │            │
-       │       │       │       │       │       │       │       │       │       │       │ -     │ =     │ <-BACKSPACE│
- `     │ 1     │ 2     │ 3     │ 4     │ 5     │ 6     │ 7     │ 8     │ 9     │ 0     │       │       │            │
----------------------------------------------------------------------------------------------------------------------
-         │       │       │       │       │       │       │       │       │       │       │ {     │ }     │ │        │
-  TAB    │   Q   │   W   │   E   │   R   │   T   │   Y   │   U   │   I   │   O   │   P   │       │       │          │
-         │       │       │       │       │       │       │       │       │       │       │ [     │ ]     │ \        │
----------------------------------------------------------------------------------------------------------------------
-           │       │       │       │       │       │       │       │       │       │ :     │ ''    │                │
- CAPSLK    │   A   │   S   │   D   │   F   │   G   │   H   │   J   │   K   │   L   │       │       │   ENTER        │
-           │       │       │       │       │       │       │       │       │       │ ;     │ '     │                │
----------------------------------------------------------------------------------------------------------------------
-               │       │       │       │       │       │       │       │ <     │ >     │ ?     │                    │
-   SHIFT       │   Z   │   X   │   C   │   V   │   B   │   N   │   M   │       │       │       │    SHIFT           │
-               │       │       │       │       │       │       │       │ ,     │ .     │ /     │                    │
----------------------------------------------------------------------------------------------------------------------
-       │       │      │       │                                       │       │       │       │       │   ^  │      │
-   FN  │  CTRL │  WIN │  ALT  │                SPACE                  │  ALT  │  MENU │ CTRL  │-------│------│------│
-       │       │      │       │                                       │       │       │       │   <   │      │   >  │
----------------------------------------------------------------------------------------------------------------------
-=====================================================================================================================
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-=====================================================================================================================
+|--------------------------------------------------------------------------------------------------------------------|
+| ESC  │  MT  │  V-  │  V+  │   │  TV  │      │      │      │   │  IO  │ PRTSR│SCRLK │PAUSE │   │INSERT│ HOME │ PGUP │
+|      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
+|----------------------------   -----------------------------   -----------------------------   ----------------------
+|  F1  │  F2  │  F3  │  F4  │   │  F5  │  F6  │  F7  │  F8  │   │  F9  │  FA  │  FB  │  FC  │   │DELETE│ END  │ PGDN │
+|      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
+|=====================================================================================================================
+| ~     │ !     │ @     │ #     │  $    │ %     │ ^     │ &     │ *     │ (     │ )     │ _     │ +     │            │
+|       │       │       │       │       │       │       │       │       │       │       │ -     │ =     │ <-BACKSPACE│
+| `     │ 1     │ 2     │ 3     │ 4     │ 5     │ 6     │ 7     │ 8     │ 9     │ 0     │       │       │            │
+|---------------------------------------------------------------------------------------------------------------------
+|         │       │       │       │       │       │       │       │       │       │       │ {     │ }     │ │        │
+|  TAB    │   Q   │   W   │   E   │   R   │   T   │   Y   │   U   │   I   │   O   │   P   │       │       │          │
+|         │       │       │       │       │       │       │       │       │       │       │ [     │ ]     │ \        │
+|---------------------------------------------------------------------------------------------------------------------
+|           │       │       │       │       │       │       │       │       │       │ :     │ ''    │                │
+| CAPSLK    │   A   │   S   │   D   │   F   │   G   │   H   │   J   │   K   │   L   │       │       │   ENTER        │
+|           │       │       │       │       │       │       │       │       │       │ ;     │ '     │                │
+|---------------------------------------------------------------------------------------------------------------------
+|               │       │       │       │       │       │       │       │ <     │ >     │ ?     │                    │
+|   SHIFT       │   Z   │   X   │   C   │   V   │   B   │   N   │   M   │       │       │       │    SHIFT           │
+|               │       │       │       │       │       │       │       │ ,     │ .     │ /     │                    │
+|---------------------------------------------------------------------------------------------------------------------
+|       │       │      │       │                                       │       │       │       │       │   ^  │      │
+|   FN  │  CTRL │  WIN │  ALT  │                SPACE                  │  ALT  │  MENU │ CTRL  │-------│------│------│
+|       │       │      │       │                                       │       │       │       │   <   │      │   >  │
+|---------------------------------------------------------------------------------------------------------------------
+======================================================================================================================
+|                                                                                                                    | 
+|                                                                                                                    | 
+|                                                                                                                    | 
+|                                                                                                                    | 
+|                                                                                                                    | 
+|                                                                                                                    | 
+======================================================================================================================
 ";
 
+        public static int StartColumn { get; set; } = 1;
 
         public static List<List<char>> KeyLayoutChars
         {
@@ -69,7 +70,24 @@ namespace ComputerAsKeyboardLinux32
         {
             Console.CursorVisible = false; //hide 
             Console.Clear(); //
-            Console.WriteLine(KeyboardLayoutString);
+
+            int screenWidth = Console.WindowWidth;
+            int offset = (screenWidth - 118) / 2;
+            StartColumn = offset + 1;
+
+            KeyLayoutChars.ForEach(chars =>
+            {
+                for (var i = 0; i < offset; i++)
+                {
+                    Console.Write(" ");
+                }
+                chars.ForEach(c =>
+                {
+                    Console.Write(c);
+                });
+                Console.WriteLine();
+            });
+            //Console.WriteLine(KeyboardLayoutString);
         }
 
 
@@ -177,7 +195,7 @@ namespace ComputerAsKeyboardLinux32
         /// <returns></returns>
         public Tuple<int, int, int, int> FirstTwoRowPosition(int rowIndex, int keyIndex)
         {
-            int startColumn = keyIndex * 7 + (keyIndex / 3) * 3;
+            int startColumn = keyIndex * 7 + (keyIndex / 3) * 3 + StartColumn;
             int startRow = rowIndex * 3 + 2;
             int endColomn = startColumn + 6;
             int endRow = startRow + 1;
@@ -186,7 +204,7 @@ namespace ComputerAsKeyboardLinux32
 
         public Tuple<int, int, int, int> ThirdRowPosition(int keyIndex)
         {
-            int startColumn = keyIndex * 8;
+            int startColumn = keyIndex * 8 + StartColumn;
             int startRow = 8;
             int endColomn = startColumn + 7;
             int endRow = startRow + 2;
@@ -200,7 +218,7 @@ namespace ComputerAsKeyboardLinux32
 
         public Tuple<int, int, int, int> FourthRowPosition(int keyIndex)
         {
-            int startColumn = keyIndex * 8;
+            int startColumn = keyIndex * 8 + StartColumn;
             if (keyIndex > 0)
             {
                 startColumn += 2;
@@ -224,7 +242,7 @@ namespace ComputerAsKeyboardLinux32
 
         public Tuple<int, int, int, int> FifthRowPosition(int keyIndex)
         {
-            int startColumn = keyIndex * 8;
+            int startColumn = keyIndex * 8 + StartColumn;
             if (keyIndex > 0)
             {
                 startColumn += 4;
@@ -248,7 +266,7 @@ namespace ComputerAsKeyboardLinux32
 
         public Tuple<int, int, int, int> SixthRowPosition(int keyIndex)
         {
-            int startColumn = keyIndex * 8;
+            int startColumn = keyIndex * 8 + StartColumn;
             if (keyIndex > 0)
             {
                 startColumn += 8;
@@ -345,7 +363,7 @@ namespace ComputerAsKeyboardLinux32
                     break;
             }
 
-            return new Tuple<int, int, int, int>(startRow, startColumn, endRow, endColumn);
+            return new Tuple<int, int, int, int>(startRow, startColumn + StartColumn, endRow, endColumn);
         }
     }
 }

@@ -485,7 +485,7 @@ public static class Program
             for (var j = sc; j <= ec; j++)
             {
                 Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j]);
+                Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
             }
         }
 
@@ -497,7 +497,7 @@ public static class Program
             for (var j = sc; j <= ec; j++)
             {
                 Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j]);
+                Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
             }
         }
     }
@@ -516,7 +516,7 @@ public static class Program
         var index = 0;
         foreach (var content in Logs)
         {
-            Console.SetCursorPosition(0, 28 + (++index));
+            Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
             Console.WriteLine(content);
         }
     }
@@ -548,6 +548,7 @@ public static class Program
 
     private static void HandleExitProgram()
     {
+        _keyboard.keyUpAll();
         Environment.Exit(0);
     }
 
