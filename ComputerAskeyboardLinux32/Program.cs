@@ -91,7 +91,7 @@ public static class Program
         catch (ArgException ex)
         {
             WriteLogOnScreen(ex.Message);
-            Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
+            //Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
             return;
         }
 
