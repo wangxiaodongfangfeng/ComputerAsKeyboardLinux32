@@ -31,6 +31,8 @@ public static class Program
 
     private static string _currentPort = "/dev/ttyUSB0";
 
+    private static byte[] _keyslots = new byte[6];
+
     private static int ControlBytes
     {
         get
@@ -267,66 +269,37 @@ public static class Program
 
                         #endregion
 
-
-                        //when a specialkey is down ,we can't send another speclial
-                        // key as an individual key, we have to wait other nospecial key 
-                        if (IsSpecialKeyHold((byte)ControlBytes) && IsSpecialKey(keyCode))
+                        byte keyByte = 0;
+                        if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out keyByte))
                         {
-                            // do nothing
+                            //if don't have duplicated key,find a new slot
+                            if (!_keyslots.Contains(keyByte))
+                            {
+                                var index = _keyslots.ToList().FindIndex(key => key == 0);
+                                _keyslots[index] = keyByte;
+                            }
+                            _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
+                            WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
                         }
-                        else
+                        if (IsSpecialKey(keyCode))
                         {
-                            byte value = 0;
-                            List<byte> bytes;
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value))
-                            {
-                                if (IsSpecialKey(keyCode))
-                                {
-                                    individual_special_key = true;
-                                    if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value))
-                                    {
-                                        _keyboard.keyDown(KeyGroup.CharKey, 0x00, value);
-                                    }
-                                }
-                                else
-                                {
-                                    _keyboard.keyDown(KeyGroup.CharKey, (byte)ControlBytes, value);
-                                    individual_special_key = false;
-                                }
-                            }
-                            else if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out bytes))
-                            {
-                                _keyboard.keyDown(KeyGroup.MediaKey, bytes[0], bytes[1], bytes[2], bytes[3]);
-                            }
+                            SpecialKeyStatus[keyCode] = true;
                         }
                     }
                     else
                     {
-                        if (thinkpadKey.mediaKeyMap.ContainsKey((byte)keyCode))
+                        byte keyByte;
+                        if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out keyByte))
                         {
-                            _keyboard.keyUpAll(KeyGroup.MediaKey);
-                            return;
+                            var index = _keyslots.ToList().FindIndex(key => key == keyByte);
+                            _keyslots[index] = 0;
+                            _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
+                            WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
                         }
-                        byte value1 = 0;
-                        if (SpecialKeyMap.ContainsKey(keyCode))
+                        if (IsSpecialKey(keyCode))
                         {
                             SpecialKeyStatus[keyCode] = false;
                         }
-
-                        // if (IsSpecialKey(keyCode) && individual_special_key)
-                        // {
-                        //     if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out value1))
-                        //     {
-                        //         _keyboard.keyDown(KeyGroup.CharKey, 0x00, value1);
-                        //     }
-                        // }
-
-                        _keyboard.keyUpAll();
-                    }
-
-                    if (e.State == KeyState.KeyDown && SpecialKeyMap.ContainsKey(keyCode))
-                    {
-                        SpecialKeyStatus[keyCode] = true;
                     }
                 };
 
@@ -507,7 +480,7 @@ public static class Program
     public static void WriteLogOnScreen(string log)
     {
         if (CommandMode) return;
-        if (Logs.Count >= 5)
+        if (Logs.Count >= 10)
         {
             Logs.Dequeue();
         }
