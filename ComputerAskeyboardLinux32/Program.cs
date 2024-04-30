@@ -226,11 +226,16 @@ public static class Program
                     }
 
                     var keyCode = e.Code;
-
-                    if ((e.Code == EventCode.Back || e.Code == EventCode.Forward) & switch_alt)
+                    //MacOS use back and forward to switch screen
+                    if ((e.Code == EventCode.Back || e.Code == EventCode.Forward) && switch_alt)
                     {
                         HandleBackAndFowardForMacOS(keyCode, e.State);
                         return;
+                    }
+                    //MacOS use Compose to show menu
+                    if (e.Code == EventCode.Compose && switch_alt)
+                    {
+
                     }
 
                     if (e.Code == EventCode.LeftMouse || e.Code == EventCode.RightMouse ||
@@ -279,7 +284,12 @@ public static class Program
                                 _keyslots[index] = keyByte;
                             }
                             _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
-                            WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
+                            //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
+                        }
+                        List<byte> mediaKeyByte;
+                        if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
+                        {
+                            _keyboard.keyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
                         }
                         if (IsSpecialKey(keyCode))
                         {
@@ -294,7 +304,12 @@ public static class Program
                             var index = _keyslots.ToList().FindIndex(key => key == keyByte);
                             _keyslots[index] = 0;
                             _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
-                            WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
+                            //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
+                        }
+                        List<byte> mediaKeyByte;
+                        if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
+                        {
+                            _keyboard.keyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
                         }
                         if (IsSpecialKey(keyCode))
                         {
@@ -545,7 +560,6 @@ public static class Program
             if (_keyboard != null)
                 _keyboard.charKeyType(Password);
         }
-
         var attempts = 0;
         var finger = new FingerPrintHelper();
         var matched = false;
@@ -556,7 +570,6 @@ public static class Program
             {
                 break;
             }
-
             attempts++;
         }
 

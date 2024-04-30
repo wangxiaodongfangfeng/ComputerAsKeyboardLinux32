@@ -90,7 +90,6 @@ namespace ComputerAsKeyboardLinux32
 
             keyMaps.Add(42, 0xE1);//LeftShift
             keyMaps.Add(54, 0xE5);//RightShift
-            keyMaps.Add(143, 0x83);//Wakeup  fn
             keyMaps.Add(29, 0xE0);//LeftCtrl
             keyMaps.Add(125, 0xE3);//LeftMeta
             keyMaps.Add(56, 0xE2);//LeftAlt

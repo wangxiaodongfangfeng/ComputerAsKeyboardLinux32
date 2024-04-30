@@ -340,9 +340,6 @@ namespace ComputerAsKeyboardLinux32
             {
                 serialPort.Write(data, 0, data.Length);
                 Thread.Sleep(20);
-//                string resultMessage = serialPort.ReadExisting();
-
-//                addMessageLog(data.ToString() + "|" + resultMessage);
                 return "";
             }
         }
@@ -404,8 +401,14 @@ namespace ComputerAsKeyboardLinux32
             // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x02} + LEN{0x08} + DATA{k0, 0x00, k1, k2, k3, k4, k5, k6}
             // CMD = KeyGroup
             // ========================
-            List<int> keyDownPacketListInt = new List<int>
-                { 0x57, 0xAB, 0x00, (int)keyGroup, 0x08, k0, 0x00, k1, k2, k3, k4, k5, k6 };
+            List<int> keyDownPacketListInt =
+
+            keyGroup == KeyGroup.CharKey
+
+            ? new List<int>
+                { 0x57, 0xAB, 0x00, (int)keyGroup, 0x08, k0, 0x00, k1, k2, k3, k4, k5, k6 }
+            : new List<int>
+                { 0x57, 0xAB, 0x00, (int)keyGroup, 0x04, k0, k1, k2, k3 };
 
             byte[] keyDownPacket = createPacketArray(keyDownPacketListInt, true);
 
