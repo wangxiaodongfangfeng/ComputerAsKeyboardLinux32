@@ -1,2 +1,12 @@
-./ComputerAsKeyboardLinux32/bin/*
-./ComputerAskeyboardLinux32/obj/*
+packages
+ComputerAskeyboardLinux32/bin
+ComputerAskeyboardLinux32/obj
+ComputerAskeyboardLinux32/.vs/ComputerAsKeyboardInterface/xs/project-cache/ComputerAsKeyboardInterface-Debug.json
+ComputerAskeyboardLinux32/bin/Debug/ComputerAskeyboardLinux32.exe
+ComputerAskeyboardLinux32/bin/Debug/ComputerAskeyboardLinux32.pdb
+ComputerAskeyboardLinux32/bin/Debug/PowerArgs.xml
+ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.csproj.AssemblyReference.cache
+ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.csproj.CoreCompileInputs.cache
+ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.csproj.FileListAbsolute.txt
+ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.exe
+ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.pdb
