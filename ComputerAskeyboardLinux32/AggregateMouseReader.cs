@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace ComputerAsKeyboardInterface
+namespace ComputerAsKeyboardLinux32
 {
     public class AggregateMouseReader : IDisposable
     {
@@ -33,7 +33,11 @@ namespace ComputerAsKeyboardInterface
 
         private void ReaderOnOnMouseMove(MouseEvent e)
         {
-            OnMouseMove?.Invoke(e);
+            if (OnMouseMove != null)
+            {
+                OnMouseMove.Invoke(e);
+            }
+
         }
 
         public void Dispose()

@@ -1,14 +1,17 @@
 using System;
 
-public class MouseMoveEvent : EventArgs
+namespace ComputerAsKeyboardLinux32
 {
-    public MouseMoveEvent(MouseAxis axis, int amount)
+    public class MouseMoveEvent : EventArgs
     {
-        Axis = axis;
-        Amount = amount;
+        public MouseMoveEvent(MouseAxis axis, int amount)
+        {
+            Axis = axis;
+            Amount = amount;
+        }
+
+        public MouseAxis Axis { get; set; }
+
+        public int Amount { get; set; }
     }
-    
-    public MouseAxis Axis { get; }
-    
-    public int Amount { get; set; }
 }

@@ -1,6 +1,9 @@
-public enum KeyState
+namespace ComputerAsKeyboardLinux32
 {
-    KeyUp,
-    KeyDown,
-    KeyHold
+    public enum KeyState
+    {
+        KeyUp,
+        KeyDown,
+        KeyHold
+    }
 }

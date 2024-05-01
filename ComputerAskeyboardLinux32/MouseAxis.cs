@@ -1,5 +1,8 @@
-public enum MouseAxis
+namespace ComputerAsKeyboardLinux32
 {
-    X,
-    Y
+    public enum MouseAxis
+    {
+        X,
+        Y
+    }
 }

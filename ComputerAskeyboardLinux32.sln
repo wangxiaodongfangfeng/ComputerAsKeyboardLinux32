@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputerAskeyboardLinux32", "ComputerAskeyboardLinux32\ComputerAskeyboardLinux32.csproj", "{55EA9A25-BAB0-4BD5-A8AF-6494E43052F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputerAskeyboardLinux32", "ComputerAskeyboardLinux32\ComputerAsKeyboardInterface.csproj", "{55EA9A25-BAB0-4BD5-A8AF-6494E43052F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

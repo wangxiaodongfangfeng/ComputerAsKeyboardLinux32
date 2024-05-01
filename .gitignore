@@ -1,2 +1,2 @@
-./ComputerAsKeyboardLinux32/bin
-./ComputerAskeyboardLinux32/obj
+./ComputerAsKeyboardLinux32/bin/*
+./ComputerAskeyboardLinux32/obj/*

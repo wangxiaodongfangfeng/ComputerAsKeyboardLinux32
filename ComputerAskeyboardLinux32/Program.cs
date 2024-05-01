@@ -1,92 +1,76 @@
-﻿using CH9329NameSpace;
-using ComputerAsKeyboardInterface;
+﻿using System;
 using System.Collections.Generic;
-using System;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using PowerArgs;
+using ComputerAsKeyboardLinux32;
 
-public class Program
+public static class Program
 {
     //initialize keylayout
-    const string keyboardLayout = @"
---------------------------------------------------------------------------------------------------------------------
- ESC  │  MT  │  V-  │  V+  │   │  TV  │      │      │      │   │  IO  │ PRTSR│SCRLK │PAUSE │   │INSERT│ HOME │ PGUP │
-      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
-----------------------------   -----------------------------   -----------------------------   ----------------------
-  F1  │  F2  │  F3  │  F4  │   │  F5  │  F6  │  F7  │  F8  │   │  F9  │  FA  │  FB  │  FC  │   │DELETE│ END  │ PGDN │
-      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
-=====================================================================================================================
- ~     │ !     │ @     │ #     │  $    │ %     │ ^     │ &     │ *     │ (     │ )     │ _     │ +     │            │
-       │       │       │       │       │       │       │       │       │       │       │ -     │ =     │ <-BACKSPACE│
- `     │ 1     │ 2     │ 3     │ 4     │ 5     │ 6     │ 7     │ 8     │ 9     │ 0     │       │       │            │
----------------------------------------------------------------------------------------------------------------------
-         │       │       │       │       │       │       │       │       │       │       │ {     │ }     │ │        │
-  TAB    │   Q   │   W   │   E   │   R   │   T   │   Y   │   U   │   I   │   O   │   P   │       │       │          │
-         │       │       │       │       │       │       │       │       │       │       │ [     │ ]     │ \        │
----------------------------------------------------------------------------------------------------------------------
-           │       │       │       │       │       │       │       │       │       │ :     │ ''    │                │
- CAPSLK    │   A   │   S   │   D   │   F   │   G   │   H   │   J   │   K   │   L   │       │       │   ENTER        │
-           │       │       │       │       │       │       │       │       │       │ ;     │ '     │                │
----------------------------------------------------------------------------------------------------------------------
-               │       │       │       │       │       │       │       │ <     │ >     │ ?     │                    │
-   SHIFT       │   Z   │   X   │   C   │   V   │   B   │   N   │   M   │       │       │       │    SHIFT           │
-               │       │       │       │       │       │       │       │ ,     │ .     │ /     │                    │
----------------------------------------------------------------------------------------------------------------------
-       │       │      │       │                                       │       │       │       │       │   ^  │      │
-   FN  │  CTRL │  WIN │  ALT  │                SPACE                  │  ALT  │  MENU │ CTRL  │-------│------│------│
-       │       │      │       │                                       │       │       │       │   <   │      │   >  │
----------------------------------------------------------------------------------------------------------------------
-=====================================================================================================================
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-|                                                                                                                   | 
-=====================================================================================================================
-";
+    private const string KeyboardLayout = ThinkpadKeyLayout.KeyboardLayoutString;
+
     private static bool toggle = true;
     private static bool mute = false;
     private static bool switch_alt = false;
     private static bool device_disconnected = false;
     private static bool exit_in_next = false;
+    private static IKeyboard _keyboard;
+    private static bool _fingerPrint = false;
+    private static bool CommandMode { get; set; }
 
-    private static CH9329 ch9328;
+    public static string Password { get; set; }
 
-    private static readonly Dictionary<EventCode, byte> specialKeyMap = new Dictionary<EventCode, byte>();
+    private static readonly Dictionary<EventCode, byte> SpecialKeyMap = new Dictionary<EventCode, byte>();
 
-    private static bool IsSpecialKeyHold(byte specialKeys)
+    private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new Dictionary<EventCode, bool>();
+
+    private static bool _bluetooth = false;
+
+    private static string _currentPort = "/dev/ttyUSB0";
+
+    private static byte[] _keyslots = new byte[6];
+
+    private static int ControlBytes
     {
-        return specialKeys != 0;
+        get
+        {
+            var value = SpecialKeyStatus
+                .Where(specialKeyStatue => specialKeyStatue.Value)
+                .Aggregate(0x00,
+                    (current, specialKeyStatue) => (int)(current | SpecialKeyMap[specialKeyStatue.Key]));
+            return value;
+        }
     }
 
     private static bool IsSpecialKey(EventCode eventCode)
     {
-        return specialKeyMap.ContainsKey(eventCode);
+        return SpecialKeyMap.ContainsKey(eventCode);
     }
 
     public static void Main(string[] args)
     {
-
-        specialKeyMap.Add(EventCode.RightMeta, 0x80);
-        specialKeyMap.Add(EventCode.RightAlt, 0x40);
-        specialKeyMap.Add(EventCode.RightShift, 0x20);
-        specialKeyMap.Add(EventCode.RightCtrl, 0x10);
-        specialKeyMap.Add(EventCode.LeftMeta, 0x08);
-        specialKeyMap.Add(EventCode.LeftAlt, 0x04);
-        specialKeyMap.Add(EventCode.LeftShift, 0x02);
-        specialKeyMap.Add(EventCode.LeftCtrl, 0x01);
+        SpecialKeyMap.Add(EventCode.RightMeta, 0x80);
+        SpecialKeyMap.Add(EventCode.RightAlt, 0x40);
+        SpecialKeyMap.Add(EventCode.RightShift, 0x20);
+        SpecialKeyMap.Add(EventCode.RightCtrl, 0x10);
+        SpecialKeyMap.Add(EventCode.LeftMeta, 0x08);
+        SpecialKeyMap.Add(EventCode.LeftAlt, 0x04);
+        SpecialKeyMap.Add(EventCode.LeftShift, 0x02);
+        SpecialKeyMap.Add(EventCode.LeftCtrl, 0x01);
 
 
         var thinkpadKey = new ThinkpadKeyMapTo9329();
         var thinkpadLayout = new ThinkpadKeyLayout();
-        var controlByte = 0x00;
+        Password = "Xinyuan@199109062337";
 
         var choosedDevice = "/dev/ttyUSB0";
         // Path to the directory where ttyUSB devices are located
-        string ttyUSBDirectory = "/dev/";
-        string mouseDevice = "mouse0";
+        var ttyUsbDirectory = "/dev/";
+        var mouseDevice = "mouse0";
+        var bluetooth = false;
 
         StartArgs parsedArgs;
 
@@ -94,154 +78,141 @@ public class Program
         {
             parsedArgs = Args.Parse<StartArgs>(args);
             choosedDevice = parsedArgs.Device;
-            ttyUSBDirectory = parsedArgs.ScanPath;
+            ttyUsbDirectory = parsedArgs.ScanPath;
             mute = !parsedArgs.Verbose;
             switch_alt = parsedArgs.MacOS;
             mouseDevice = parsedArgs.Mouse;
-
-           
+            bluetooth = parsedArgs.Bluetooth;
+            _fingerPrint = parsedArgs.Fingerprint;
         }
         catch (ArgException ex)
         {
             WriteLogOnScreen(ex.Message);
-            Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
+            //Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
             return;
         }
 
+        ThinkpadKeyLayout.WriteKeyboardOnScreen();
 
-        Console.CursorVisible = false; //hide 
-        Console.Clear(); //
-        var chars = new List<List<char>>();
-        List<char> chartList = new List<char>();
-        chars.Add(chartList);
-        new List<char>(keyboardLayout.ToCharArray()).ForEach(c =>
-       {
-           if (c == '\n')
-           {
-               chartList = new List<char>();
-               chars.Add(chartList);
-               return;
-           }
-           chartList.Add(c);
-       });
-       
-        Console.WriteLine(keyboardLayout);
+        var chars = ThinkpadKeyLayout.KeyLayoutChars;
+
         Console.TreatControlCAsInput = true;
         using (AggregateInputReader aggHandler1 = new AggregateInputReader())
         {
-            WriteLogOnScreen("This is a test log ");
+            #region ToggleKeyImplementation
+
             aggHandler1.OnKeyPress += (e) =>
             {
+                if (MenuHandler.CommandMode) return;
                 if (e.State == KeyState.KeyUp)
                 {
-                    ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
+                    ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
                 }
             };
+
+            #endregion
+
+            #region AutoScan Region
 
             if (parsedArgs.AutoScan)
             {
                 try
                 {
                     // Get a list of all files in the /dev/ directory
-                    string[] devices = Directory.GetFiles(ttyUSBDirectory);
+                    var devices = Directory.GetFiles(ttyUsbDirectory);
 
                     // Filter the list to only include ttyUSB devices
-                    var ttyUSBDevices = Array.FindAll(devices, s => s.StartsWith("/dev/ttyUSB", StringComparison.Ordinal));
+                    var ttyUsbDevices = Directory.GetFiles(ttyUsbDirectory)
+                        .Where(device => device.StartsWith("/dev/ttyUSB", StringComparison.Ordinal) ||
+                                         device.StartsWith("/dev/rfcomm", StringComparison.Ordinal)).ToList();
 
-                    var index = 0;
 
-                    if (ttyUSBDevices.Length <= 0)
+                    if (ttyUsbDevices.Count <= 0)
                     {
                         WriteLogOnScreen("TTY Devices are not available, please plug in your device and try again");
+                        return;
                     }
 
                     //if only one device is available ,choose it directly.
-                    if (ttyUSBDevices.Length == 1)
+                    if (ttyUsbDevices.Count == 1)
                     {
-                        choosedDevice = ttyUSBDevices[0];
+                        choosedDevice = ttyUsbDevices[0];
                     }
                     else
                     {
                         // Output the list of ttyUSB devices
-                        WriteLogOnScreen("ttyUSB devices:");
-                        foreach (var device in ttyUSBDevices)
-                        {
-                            WriteLogOnScreen($"{++index}.{device}");
-                        }
-                        var code = 0;
-
-                        //Try to choose a USB Device we want to use
-                        while (code <= 0 || code > ttyUSBDevices.Length + 1)
-                        {
-                            WriteLogOnScreen("Please Choose the device you want to use");
-                            var codeStr = Console.ReadLine();
-                            if (codeStr != null)
-                            {
-                                code = int.TryParse(codeStr, out int result) ? result : 0;
-                            }
-                        }
-                        choosedDevice = devices[code - 1];
+                        WriteLogOnScreen(
+                            "There are more than one device in the folder, please specify the device you want to use by command");
+                        return;
                     }
-
                 }
                 catch (Exception ex)
                 {
                     // Handle any exceptions that may occur
-                    WriteLogOnScreen($"An error occurred: {ex.Message}");
+                    WriteLogOnScreen(string.Format("An error occurred: {0}", ex.Message));
                 }
             }
-            WriteLogOnScreen($"device is {choosedDevice}");
-            using (AggregateInputReader aggHandler = new AggregateInputReader())
+
+            #endregion
+
+            WriteLogOnScreen(String.Format("device is {0}", choosedDevice));
+
+            using (var aggHandler = new AggregateInputReader())
             {
-
-
-
                 if (File.Exists(choosedDevice))
                 {
-                    ch9328 = new CH9329(PortName: choosedDevice);
+                    _keyboard = GenerateKeyboard(bluetooth, choosedDevice);
+                    _bluetooth = bluetooth;
+                    _currentPort = choosedDevice;
                 }
 
-                var watcher = new FileSystemWatcher(ttyUSBDirectory)
+                #region WatchFileChange auto detect serial port
+
+                var watcher = new FileSystemWatcher(ttyUsbDirectory)
                 {
-                    NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime | NotifyFilters.DirectoryName
-                | NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.Security | NotifyFilters.Size,
+                    NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime |
+                                   NotifyFilters.DirectoryName
+                                   | NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite |
+                                   NotifyFilters.Security | NotifyFilters.Size,
                     EnableRaisingEvents = true
                 };
 
                 watcher.Created += (sender, e) =>
                 {
-                    WriteLogOnScreen($"File created:{e.FullPath}");
+                    WriteLogOnScreen(string.Format("File created:{0}", e.FullPath));
                     try
                     {
-                        if (e.FullPath.Contains("ttyUSB"))
-                        {
-                            ch9328 = new CH9329(PortName: e.FullPath);
-                            WriteLogOnScreen($"ConnectToAnother:{e.FullPath}");
-                            device_disconnected = false;
-                        }
+                        if (!(e.FullPath.Contains("ttyUSB") || e.FullPath.Contains("rfcomm"))) return;
+                        _keyboard.Dispose();
+                        _keyboard = GenerateKeyboard(bluetooth, e.FullPath);
+                        _bluetooth = bluetooth;
+                        _currentPort = e.FullPath;
+                        WriteLogOnScreen(String.Format("ConnectToAnother:{0}", e.FullPath));
+                        device_disconnected = false;
                     }
                     catch (Exception ex)
                     {
                         WriteLogOnScreen(ex.Message);
                     }
-
                 };
                 watcher.Deleted += (sender, e) =>
                 {
-                    WriteLogOnScreen($"File Deleted:{e.FullPath}");
-                    if (e.FullPath == choosedDevice)
-                    {
-                        WriteLogOnScreen("Device is removed , can't use now");
-                        device_disconnected = true;
-                    }
+                    WriteLogOnScreen(string.Format("File Deleted:{0}", e.FullPath));
+                    if (e.FullPath != choosedDevice) return;
+                    WriteLogOnScreen("Device is removed , can't use now");
+                    device_disconnected = true;
                 };
-                bool individual_special_key = false;
+
+                #endregion
+
                 aggHandler.OnKeyPress += (KeyPressEvent e) =>
                 {
                     if (!mute)
                     {
-                        WriteLogOnScreen($"Code:{e.Code} State:{e.State},Event:{e.DevicePath}");
+                        WriteLogOnScreen(String.Format("Code:{0} State:{1},Event:{2}", e.Code, e.State,
+                            e.DevicePath));
                     }
+
                     // take no action when toggle is off
                     if (!toggle || device_disconnected)
                     {
@@ -249,17 +220,25 @@ public class Program
                     }
 
                     var keyCode = e.Code;
-
-                    if ((e.Code == EventCode.Back || e.Code == EventCode.Forward) & switch_alt)
+                    //MacOS use back and forward to switch screen
+                    if ((e.Code == EventCode.Back || e.Code == EventCode.Forward) && switch_alt)
                     {
                         HandleBackAndFowardForMacOS(keyCode, e.State);
                         return;
                     }
-                    if (e.Code == EventCode.LeftMouse || e.Code == EventCode.RightMouse || e.Code == EventCode.MiddleMouse)
+                    //MacOS use Compose to show menu
+                    if (e.Code == EventCode.Compose && switch_alt)
+                    {
+
+                    }
+
+                    if (e.Code == EventCode.LeftMouse || e.Code == EventCode.RightMouse ||
+                        e.Code == EventCode.MiddleMouse)
                     {
                         HandleMouseKey(e, switch_alt);
                         return;
                     }
+
                     //When I was working in MacOS ,I should swith the left alt and meta
                     //TODO: we should refator this code, because it looks ugly now.
                     if (switch_alt && (keyCode == EventCode.LeftMeta || keyCode == EventCode.LeftAlt))
@@ -269,91 +248,135 @@ public class Program
 
                     if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
                     {
-                        //when a specialkey is down ,we can't send another speclial
-                        // key as an individual key, we have to wait other nospecial key 
-                        if (IsSpecialKeyHold((byte)controlByte) && IsSpecialKey(keyCode))
+                        #region HandleAutoInputPassword When Ctrl+F1 and Ctrl + F2 Happen
+
+                        switch (e.Code)
                         {
-                            // do nothing
+                            case EventCode.F1 when ControlBytes == 0x01:
+                                HandleInputPassword();
+                                return;
+                            case EventCode.F10 when ControlBytes == 0x01:
+                                HandleRefreshKeyboard();
+                                return;
                         }
-                        else
+
+                        #endregion
+
+                        byte keyByte = 0;
+                        if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out keyByte))
                         {
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out var value))
+                            //if don't have duplicated key,find a new slot
+                            if (!_keyslots.Contains(keyByte))
                             {
-                                if (IsSpecialKey(keyCode))
-                                {
-                                    individual_special_key = true;
-                                }
-                                else
-                                {
-                                    ch9328?.keyDown(CH9329.KeyGroup.CharKey, (byte)controlByte, value);
-                                    individual_special_key = false;
-                                    if (controlByte == 0x01 && keyCode == EventCode.Compose)
-                                    {
-                                        exit_in_next = true;
-                                    }
-                                }
+                                var index = _keyslots.ToList().FindIndex(key => key == 0);
+                                _keyslots[index] = keyByte;
                             }
+                            _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
+                            //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
+                        }
+                        List<byte> mediaKeyByte;
+                        if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
+                        {
+                            _keyboard.keyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
+                        }
+                        if (IsSpecialKey(keyCode))
+                        {
+                            SpecialKeyStatus[keyCode] = true;
                         }
                     }
                     else
                     {
-                        if (specialKeyMap.TryGetValue(keyCode, out byte value))
+                        byte keyByte;
+                        if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out keyByte))
                         {
-                            controlByte -= value;
+                            var index = _keyslots.ToList().FindIndex(key => key == keyByte);
+                            _keyslots[index] = 0;
+                            _keyboard.keyDown(KeyGroup.CharKey, 0x00, _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]);
+                            //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
                         }
-                        if (IsSpecialKey(keyCode) && individual_special_key)
+                        List<byte> mediaKeyByte;
+                        if (thinkpadKey.mediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
                         {
-                            if (thinkpadKey.keyMaps.TryGetValue((int)keyCode, out var value1))
-                            {
-                                ch9328?.keyDown(CH9329.KeyGroup.CharKey, 0x00, value1);
-                            }
+                            _keyboard.keyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
                         }
-                        ch9328?.keyUpAll();
-
-                    }
-                    if (e.State is KeyState.KeyDown)
-                    {
-                        if (specialKeyMap.TryGetValue(keyCode, out byte value))
+                        if (IsSpecialKey(keyCode))
                         {
-                            controlByte += value;
+                            SpecialKeyStatus[keyCode] = false;
                         }
                     }
                 };
+
+                #region handle toggle
+
                 //handle toggle event ,sometime ,we want to turn off the keyboard
                 aggHandler.OnKeyPress += (e) =>
                 {
-                    if (e.Code == EventCode.Prog1 && e.State == KeyState.KeyUp)
-                    {
-                        toggle = !toggle;
-                        WriteLogOnScreen($"Toggle is {(toggle ? "on" : "off")} now");
-                    }
+                    if (e.Code != EventCode.Prog1 || e.State != KeyState.KeyUp) return;
+                    toggle = !toggle;
+                    WriteLogOnScreen(String.Format("Toggle is {0} now", (toggle ? "on" : "off")));
                 };
+
+                #endregion
+
+                #region handle mute
+
                 //handle mute event, we don't like log to be printed
                 aggHandler.OnKeyPress += (e) =>
                 {
-                    if (e.Code == EventCode.Mute && e.State == KeyState.KeyUp)
-                    {
-                        mute = !mute;
-                        WriteLogOnScreen($"Log is {(mute ? "on" : "off")} now");
-                    }
+                    if (e.Code != EventCode.Mute || e.State != KeyState.KeyUp) return;
+                    mute = !mute;
+                    WriteLogOnScreen(String.Format("Log is {0} now", (mute ? "on" : "off")));
                 };
-
-                var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
-                mouseReader.OnMouseMove += (e) =>
+                MenuHandler.BeforeExitApplication = () => { _keyboard?.keyUpAll(); };
+                // long touch fn will show menu;
+                int lastCodeCount = 0;
+                aggHandler.OnKeyPress += (e) =>
                 {
-                    if (MouseKeyHold)
+                    if (e.Code != EventCode.Wakeup)
                     {
-                        ch9328?.mouseMoveRel(e.X, e.Y, true, HoldMouseKey);
+                        lastCodeCount = 0;
+                        return;
+                    }
+                    else if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
+                    {
+                        lastCodeCount++;
+                        if (lastCodeCount > 20)
+                        {
+                            MenuHandler.StartMenu();
+                            lastCodeCount = 0;
+                        }
                     }
                     else
                     {
-                        ch9328?.mouseMoveRel(e.X, e.Y);
+                        lastCodeCount = 0;
                     }
+                };
+                #endregion
+
+                var mouseReader = new MouseReader(String.Format("/dev/input/{0}", mouseDevice));
+                mouseReader.OnMouseMove += (e) =>
+                {
+                    if (_keyboard == null) return;
+                    if (MouseKeyHold)
+                    {
+                        _keyboard.mouseMoveRel(e.X, e.Y, true, HoldMouseKey);
+                    }
+                    else
+                    {
+                        _keyboard.mouseMoveRel(e.X, e.Y);
+                    }
+                };
+
+                mouseReader.OnMouseScroll += (e) =>
+                {
+                    if (_keyboard == null) return;
+                    _keyboard.mouseScrollForMac(e.ScrollCount);
                 };
 
                 System.Console.CancelKeyPress += (sender, eventArgs) =>
                 {
-                    ch9328?.keyUpAll();
+                    if (_keyboard == null) return;
+                    _keyboard.keyUpAll();
                 };
                 while (true)
                 {
@@ -363,44 +386,63 @@ public class Program
                         break;
                     }
                 }
-                ch9328?.keyUpAll();
+
+                _keyboard.keyUpAll();
             }
         }
     }
+
     /// <summary>
     /// if the Mousekey is Hold now
     /// </summary>
     private static bool MouseKeyHold { get; set; }
 
-    private static CH9329.MouseButtonCode HoldMouseKey { get; set; }
+    private static MouseButtonCode HoldMouseKey { get; set; }
+
     private static void HandleMouseKey(KeyPressEvent e, bool macos)
     {
-        CH9329.MouseButtonCode mouse = CH9329.MouseButtonCode.LEFT;
+        if (_keyboard == null)
+            return;
+
+        MouseButtonCode mouse = MouseButtonCode.LEFT;
         switch (e.Code)
         {
             case EventCode.LeftMouse:
-                mouse = CH9329.MouseButtonCode.LEFT;
+                mouse = MouseButtonCode.LEFT;
                 break;
             case EventCode.RightMouse:
-                mouse = CH9329.MouseButtonCode.RIGHT;
+                mouse = MouseButtonCode.RIGHT;
                 break;
             case EventCode.MiddleMouse:
-                mouse = CH9329.MouseButtonCode.MIDDLE;
+                mouse = MouseButtonCode.MIDDLE;
                 break;
         }
 
-
         if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
         {
-            if (macos) { ch9328?.mouseButtonDownForMac(mouse); }
-            else { ch9328?.mouseButtonDown(mouse); }
+            if (macos)
+            {
+                _keyboard.mouseButtonDownForMac(mouse);
+            }
+            else
+            {
+                _keyboard.mouseButtonDown(mouse);
+            }
+
             MouseKeyHold = true;
             HoldMouseKey = mouse;
         }
         else
         {
-            if (macos) { ch9328?.mouseButtonUpAllForMac(); }
-            else { ch9328?.mouseButtonUpAll(); }
+            if (macos)
+            {
+                _keyboard.mouseButtonUpAllForMac();
+            }
+            else
+            {
+                _keyboard.mouseButtonUpAll();
+            }
+
             MouseKeyHold = false;
             HoldMouseKey = mouse;
         }
@@ -414,72 +456,87 @@ public class Program
     /// </summary>
     /// <param name="code"></param>
     /// <param name="keyState"></param>
-    public static void HandleBackAndFowardForMacOS(EventCode code, KeyState keyState)
+    private static void HandleBackAndFowardForMacOS(EventCode code, KeyState keyState)
     {
+        if (_keyboard == null)
+            return;
         if (keyState == KeyState.KeyDown)
         {
             var value = code == EventCode.Back ? 0x50 : 0x4F;
             //send Ctrl+<- or Ctrl + ->
-            ch9328?.keyDown(CH9329.KeyGroup.CharKey, (byte)0x01, (byte)value);
+            _keyboard.keyDown(KeyGroup.CharKey, (byte)0x01, (byte)value);
         }
         else
         {
-            ch9328?.keyUpAll();
-        }
-
-    }
-    private static void ToggleKeys(List<List<char>> chars, (int, int, int, int) values)
-    {
-
-        var (sr, sc, er, ec) = values;
-        Console.BackgroundColor = ConsoleColor.DarkCyan;
-        for (var i = sr; i <= er; i++)
-        {
-            for (var j = sc; j <= ec; j++)
-            {
-                Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j]);
-            }
-        }
-        Console.ResetColor();
-        Thread.Sleep(30);
-        Console.BackgroundColor = ConsoleColor.Black;
-        for (var i = sr; i <= er; i++)
-        {
-            for (var j = sc; j <= ec; j++)
-            {
-                Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j]);
-            }
+            _keyboard.keyUpAll();
         }
     }
 
+    private static readonly Queue<string> Logs = new Queue<string>();
 
-    private static readonly Queue<string> logs = new Queue<string>();
-
-    private static void WriteLogOnScreen(string log)
+    public static void WriteLogOnScreen(string log)
     {
-
-        if (logs.Count >= 5)
+        if (MenuHandler.CommandMode) return;
+        if (Logs.Count >= 10)
         {
-            logs.Dequeue();
+            Logs.Dequeue();
         }
 
-        logs.Enqueue(log);
-
+        Logs.Enqueue(log);
         var index = 0;
-
-        foreach (var content in logs)
+        foreach (var content in Logs)
         {
-            if (content == null)
-            {
-                throw new ArgumentNullException(nameof(content));
-            }
-
-            Console.SetCursorPosition(0, 28 + (++index));
+            Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
             Console.WriteLine(content);
+        }
+    }
 
+    private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
+    {
+        return bluetooth ? (IKeyboard)new BTK05(port) : (IKeyboard)new CH9329(port);
+    }
+
+    /// <summary>
+    /// RefreshKeyboard
+    /// Sometime when the computer wake up from sleep
+    /// bluetooth will be disconnected.
+    /// we should reconnect the bluetooth by reopen the port
+    /// </summary>
+    private static void HandleRefreshKeyboard()
+    {
+        _keyboard.Dispose();
+        _keyboard = GenerateKeyboard(_bluetooth, _currentPort);
+        WriteLogOnScreen(String.Format("Refreshed the keyboard with {0},{1}", _bluetooth, _currentPort));
+    }
+
+    private static void HandleInputPassword()
+    {
+        if (!_fingerPrint)
+        {
+            if (_keyboard != null)
+                _keyboard.charKeyType(Password);
+        }
+        var attempts = 0;
+        var finger = new FingerPrintHelper();
+        var matched = false;
+        while (attempts < 3)
+        {
+            matched = FingerPrintHelper.VerifyFinger("ford");
+            if (matched)
+            {
+                break;
+            }
+            attempts++;
         }
 
+        if (_keyboard != null && matched)
+        {
+            WriteLogOnScreen("Your fingerprint is matched");
+            _keyboard.charKeyType(Password);
+        }
+        else
+        {
+            WriteLogOnScreen("Your fingerprint is not matched");
+        }
     }
 }
