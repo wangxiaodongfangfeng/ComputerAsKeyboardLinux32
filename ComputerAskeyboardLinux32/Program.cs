@@ -21,7 +21,7 @@ public static class Program
     private static bool _fingerPrint = false;
     private static bool CommandMode { get; set; }
 
-    private static string Password { get; set; }
+    public static string Password { get; set; }
 
     private static readonly Dictionary<EventCode, byte> SpecialKeyMap = new Dictionary<EventCode, byte>();
 
@@ -43,11 +43,6 @@ public static class Program
                     (current, specialKeyStatue) => (int)(current | SpecialKeyMap[specialKeyStatue.Key]));
             return value;
         }
-    }
-
-    private static bool IsSpecialKeyHold(byte specialKeys)
-    {
-        return specialKeys != 0;
     }
 
     private static bool IsSpecialKey(EventCode eventCode)
@@ -108,10 +103,10 @@ public static class Program
 
             aggHandler1.OnKeyPress += (e) =>
             {
-                if (CommandMode) return;
+                if (MenuHandler.CommandMode) return;
                 if (e.State == KeyState.KeyUp)
                 {
-                    ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
+                    ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
                 }
             };
 
@@ -210,7 +205,6 @@ public static class Program
 
                 #endregion
 
-                var individual_special_key = false;
                 aggHandler.OnKeyPress += (KeyPressEvent e) =>
                 {
                     if (!mute)
@@ -260,12 +254,6 @@ public static class Program
                         {
                             case EventCode.F1 when ControlBytes == 0x01:
                                 HandleInputPassword();
-                                return;
-                            case EventCode.F2 when ControlBytes == 0x01:
-                                FunctionForSetPassword();
-                                return;
-                            case EventCode.F11 when ControlBytes == 0x01:
-                                HandleExitProgram();
                                 return;
                             case EventCode.F10 when ControlBytes == 0x01:
                                 HandleRefreshKeyboard();
@@ -339,7 +327,30 @@ public static class Program
                     mute = !mute;
                     WriteLogOnScreen(String.Format("Log is {0} now", (mute ? "on" : "off")));
                 };
-
+                MenuHandler.BeforeExitApplication = () => { _keyboard?.keyUpAll(); };
+                // long touch fn will show menu;
+                int lastCodeCount = 0;
+                aggHandler.OnKeyPress += (e) =>
+                {
+                    if (e.Code != EventCode.Wakeup)
+                    {
+                        lastCodeCount = 0;
+                        return;
+                    }
+                    else if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
+                    {
+                        lastCodeCount++;
+                        if (lastCodeCount > 20)
+                        {
+                            MenuHandler.StartMenu();
+                            lastCodeCount = 0;
+                        }
+                    }
+                    else
+                    {
+                        lastCodeCount = 0;
+                    }
+                };
                 #endregion
 
                 var mouseReader = new MouseReader(String.Format("/dev/input/{0}", mouseDevice));
@@ -461,40 +472,11 @@ public static class Program
         }
     }
 
-    private static void ToggleKeys(List<List<char>> chars, Tuple<int, int, int, int> values)
-    {
-        var sr = values.Item1;
-        var sc = values.Item2;
-        var er = values.Item3;
-        var ec = values.Item4;
-        Console.BackgroundColor = ConsoleColor.DarkCyan;
-        for (var i = sr; i <= er; i++)
-        {
-            for (var j = sc; j <= ec; j++)
-            {
-                Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
-            }
-        }
-
-        Console.ResetColor();
-        Thread.Sleep(30);
-        Console.BackgroundColor = ConsoleColor.Black;
-        for (var i = sr; i <= er; i++)
-        {
-            for (var j = sc; j <= ec; j++)
-            {
-                Console.SetCursorPosition(j, i);
-                Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
-            }
-        }
-    }
-
     private static readonly Queue<string> Logs = new Queue<string>();
 
     public static void WriteLogOnScreen(string log)
     {
-        if (CommandMode) return;
+        if (MenuHandler.CommandMode) return;
         if (Logs.Count >= 10)
         {
             Logs.Dequeue();
@@ -512,32 +494,6 @@ public static class Program
     private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
     {
         return bluetooth ? (IKeyboard)new BTK05(port) : (IKeyboard)new CH9329(port);
-    }
-
-    private static void FunctionForSetPassword()
-    {
-        Console.Clear();
-        Console.CursorVisible = true;
-        Console.SetCursorPosition(0, 0);
-        CommandMode = true;
-        Console.WriteLine("Please Input Your Password");
-        Password = Console.ReadLine();
-        Console.WriteLine(string.Format("Your password is {0}, Confirm? (Y/n)", Password));
-        var input = Console.ReadLine();
-        if (input == "n")
-        {
-            FunctionForSetPassword();
-        }
-
-        CommandMode = false;
-        ThinkpadKeyLayout.WriteKeyboardOnScreen();
-        return;
-    }
-
-    private static void HandleExitProgram()
-    {
-        _keyboard.keyUpAll();
-        Environment.Exit(0);
     }
 
     /// <summary>

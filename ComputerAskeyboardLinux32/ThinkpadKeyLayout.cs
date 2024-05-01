@@ -96,7 +96,6 @@ namespace ComputerAsKeyboardLinux32
             //Console.WriteLine(KeyboardLayoutString);
         }
 
-
         public List<List<EventCode>> keyLayout;
 
         public ThinkpadKeyLayout()
@@ -370,6 +369,35 @@ namespace ComputerAsKeyboardLinux32
             }
 
             return new Tuple<int, int, int, int>(startRow, startColumn + StartColumn, endRow, endColumn);
+        }
+
+        public static void ToggleKeys(List<List<char>> chars, Tuple<int, int, int, int> values)
+        {
+            var sr = values.Item1;
+            var sc = values.Item2;
+            var er = values.Item3;
+            var ec = values.Item4;
+            Console.BackgroundColor = ConsoleColor.DarkCyan;
+            for (var i = sr; i <= er; i++)
+            {
+                for (var j = sc; j <= ec; j++)
+                {
+                    Console.SetCursorPosition(j, i);
+                    Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
+                }
+            }
+
+            Console.ResetColor();
+            Thread.Sleep(30);
+            Console.BackgroundColor = ConsoleColor.Black;
+            for (var i = sr; i <= er; i++)
+            {
+                for (var j = sc; j <= ec; j++)
+                {
+                    Console.SetCursorPosition(j, i);
+                    Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
+                }
+            }
         }
     }
 }

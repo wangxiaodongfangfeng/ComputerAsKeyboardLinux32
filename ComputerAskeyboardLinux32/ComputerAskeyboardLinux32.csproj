@@ -40,7 +40,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BTK05.cs" />
-    <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="FingerPrintHelper.cs" />
     <Compile Include="IKeyboard.cs" />
     <Compile Include="LogKeyboard.cs" />
@@ -54,7 +53,6 @@
     <Compile Include="EventType.cs" />
     <Compile Include="KeyState.cs" />
     <Compile Include="MouseMoveEvent.cs" />
-    <Compile Include="ScreenKeyboard.cs" />
     <Compile Include="ThinkpadKeyLayout.cs" />
     <Compile Include="ThinkpadKeyMapTo9329.cs" />
     <Compile Include="MouseEvent.cs" />
@@ -62,6 +60,7 @@
     <Compile Include="KeyPressEvent.cs" />
     <Compile Include="EventCode.cs" />
     <Compile Include="MouseAxis.cs" />
+    <Compile Include="MenuHandler.cs"/>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
