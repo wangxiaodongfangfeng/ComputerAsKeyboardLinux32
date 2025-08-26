@@ -1,6 +1,6 @@
 ﻿namespace ComputerAsKeyboardInterface
 {
-    public class MenuHandler
+    public static class MenuHandler
     {
         private static string Menu { get; set; } = """
 
@@ -89,6 +89,7 @@
         private static void HandleExitProgram()
         {
             BeforeExitApplication?.Invoke();
+            Program.ExitInNext = true;
             Environment.Exit(0);
         }
 
@@ -102,7 +103,7 @@
             Console.Clear();
             Console.CursorVisible = true;
             Console.SetCursorPosition(0, 0);
-            MenuHandler.CommandMode = true;
+            CommandMode = true;
             Console.WriteLine("Please Input Your Password");
             Program.Password = Console.ReadLine();
             Console.WriteLine($"Your password is {Program.Password}, Confirm? (Y/n)");

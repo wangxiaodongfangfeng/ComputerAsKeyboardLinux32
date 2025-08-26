@@ -14,7 +14,7 @@ public static class Program
   private static bool _mute = false;
   private static bool _switchAlt = false;
   private static bool _deviceDisconnected = false;
-  private const bool ExitInNext = false;
+  public static bool ExitInNext { get; set; } = false;
   private static IKeyboard? _keyboard;
   private static bool _fingerPrint = false;
   private static bool CommandMode { get; set; }
@@ -204,10 +204,7 @@ public static class Program
       }
 
       // take no action when toggle is off
-      if (!_toggle || _deviceDisconnected)
-      {
-        return;
-      }
+      if (!_toggle || _deviceDisconnected) return;
 
       var keyCode = e.Code;
       switch (e.Code)
@@ -226,14 +223,14 @@ public static class Program
           return;
       }
 
-      //When I was working in MacOS ,I should swith the left alt and meta
-      //TODO: we should refator this code, because it looks ugly now.
-      if (_switchAlt && (keyCode == EventCode.LeftMeta || keyCode == EventCode.LeftAlt))
+      //When I was working in MacOS ,I should switch the left alt and meta
+      //TODO: we should refactor this code, because it looks ugly now.
+      if (_switchAlt && keyCode is EventCode.LeftMeta or EventCode.LeftAlt)
       {
         keyCode = keyCode == EventCode.LeftMeta ? EventCode.LeftAlt : EventCode.LeftMeta;
       }
 
-      if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
+      if (e.State is KeyState.KeyDown or KeyState.KeyHold)
       {
         #region HandleAutoInputPassword When Ctrl+F1 and Ctrl + F2 Happen
 
@@ -249,54 +246,45 @@ public static class Program
 
         #endregion
 
-        byte keyByte = 0;
-        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out keyByte))
+        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte))
         {
-          //if don't have duplicated key,find a new slot
+          //if we don't have duplicated key,find a new slot
           if (!KeySlots.Contains(keyByte))
           {
             var index = KeySlots.ToList().FindIndex(key => key == 0);
             KeySlots[index] = keyByte;
           }
 
-          _keyboard.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
+          _keyboard?.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
             KeySlots[4], KeySlots[5]);
           //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
         }
 
-        List<byte> mediaKeyByte;
-        if (thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
+        if (thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out var mediaKeyByte))
         {
-          _keyboard.KeyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
+          _keyboard?.KeyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
         }
 
-        if (IsSpecialKey(keyCode))
-        {
-          SpecialKeyStatus[keyCode] = true;
-        }
+        if (IsSpecialKey(keyCode)) SpecialKeyStatus[keyCode] = true;
       }
       else
       {
-        byte keyByte;
-        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out keyByte))
+        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte))
         {
           var index = KeySlots.ToList().FindIndex(key => key == keyByte);
           KeySlots[index] = 0;
-          _keyboard.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
+          _keyboard?.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
             KeySlots[4], KeySlots[5]);
           //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
         }
 
-        List<byte> mediaKeyByte;
+        List<byte>? mediaKeyByte;
         if (thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
         {
-          _keyboard.KeyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
+          _keyboard?.KeyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
         }
 
-        if (IsSpecialKey(keyCode))
-        {
-          SpecialKeyStatus[keyCode] = false;
-        }
+        if (IsSpecialKey(keyCode)) SpecialKeyStatus[keyCode] = false;
       }
     };
 
@@ -307,7 +295,7 @@ public static class Program
     {
       if (e.Code != EventCode.Prog1 || e.State != KeyState.KeyUp) return;
       _toggle = !_toggle;
-      WriteLogOnScreen(String.Format("Toggle is {0} now", (_toggle ? "on" : "off")));
+      WriteLogOnScreen($"Toggle is {(_toggle ? "on" : "off")} now");
     };
 
     #endregion
@@ -319,36 +307,29 @@ public static class Program
     {
       if (e.Code != EventCode.Mute || e.State != KeyState.KeyUp) return;
       _mute = !_mute;
-      WriteLogOnScreen(String.Format("Log is {0} now", (_mute ? "on" : "off")));
+      WriteLogOnScreen($"Log is {(_mute ? "on" : "off")} now");
     };
     MenuHandler.BeforeExitApplication = () => { _keyboard?.KeyUpAll(); };
     // long touch fn will show menu;
-    int lastCodeCount = 0;
+    var lastCodeCount = 0;
     aggHandler.OnKeyPress += (e) =>
     {
       if (e.Code != EventCode.Wakeup)
       {
-        lastCodeCount = 0;
-        return;
       }
-      else if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
+      else if (e.State is KeyState.KeyDown or KeyState.KeyHold)
       {
         lastCodeCount++;
-        if (lastCodeCount > 20)
-        {
-          MenuHandler.StartMenu();
-          lastCodeCount = 0;
-        }
+        if (lastCodeCount <= 20) return;
+        MenuHandler.StartMenu();
       }
-      else
-      {
-        lastCodeCount = 0;
-      }
+
+      lastCodeCount = 0;
     };
 
     #endregion
 
-    var mouseReader = new MouseReader(String.Format("/dev/input/{0}", mouseDevice));
+    var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
     mouseReader.OnMouseMove += (e) =>
     {
       if (_keyboard == null) return;
