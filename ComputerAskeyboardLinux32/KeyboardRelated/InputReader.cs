@@ -1,8 +1,6 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using ComputerAsKeyboardInterface.MouseRelated;
 
-namespace ComputerAsKeyboardLinux32
+namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
     public class InputReader : IDisposable
     {
@@ -13,7 +11,7 @@ namespace ComputerAsKeyboardLinux32
         public event RaiseKeyPress OnKeyPress;
         public event RaiseMouseMove OnMouseMove;
 
-        private int BufferLength = 16;
+        private int _bufferLength = 16;
 
         private byte[] _buffer;
 
@@ -29,8 +27,8 @@ namespace ComputerAsKeyboardLinux32
 
         public InputReader(string path)
         {
-            BufferLength = Platform64 ? 24 : 16;
-            _buffer = new byte[BufferLength];
+            _bufferLength = Platform64 ? 24 : 16;
+            _buffer = new byte[_bufferLength];
             _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             this._path = path;
             new Task(new Action(Run)).Start();
@@ -45,7 +43,7 @@ namespace ComputerAsKeyboardLinux32
                 if (_disposing)
                     break;
 
-                _stream.Read(_buffer, 0, BufferLength);
+                _stream.Read(_buffer, 0, _bufferLength);
 
                 var type = BitConverter.ToInt16(new[] { _buffer[offset + 1], _buffer[offset + 2] }, 0);
                 var code = BitConverter.ToInt16(new[] { _buffer[offset + 3], _buffer[offset + 4] }, 0);
@@ -56,10 +54,10 @@ namespace ComputerAsKeyboardLinux32
 
                 switch (eventType)
                 {
-                    case EventType.EV_KEY:
+                    case EventType.EvKey:
                         HandleKeyPressEvent(code, value);
                         break;
-                    case EventType.EV_REL:
+                    case EventType.EvRel:
                         var axis = (MouseAxis)code;
                         var e = new MouseMoveEvent(axis, value);
                         if (OnMouseMove != null)

@@ -1,65 +1,65 @@
-namespace ComputerAsKeyboardLinux32
+namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
     public enum EventType
     {
         /// <summary>
         /// Used as markers to separate events. Events may be separated in time or in space, such as with the multitouch protocol.
         /// </summary>
-        EV_SYN,
+        EvSyn,
 
         /// <summary>
         /// Used to describe state changes of keyboards, buttons, or other key-like devices.
         /// </summary>
-        EV_KEY,
+        EvKey,
 
         /// <summary>
         /// Used to describe relative axis value changes, e.g. moving the mouse 5 units to the left.
         /// </summary>
-        EV_REL,
+        EvRel,
 
         /// <summary>
         /// Used to describe absolute axis value changes, e.g. describing the coordinates of a touch on a touchscreen.
         /// </summary>
-        EV_ABS,
+        EvAbs,
 
         /// <summary>
         /// Used to describe miscellaneous input data that do not fit into other types.
         /// </summary>
-        EV_MSC,
+        EvMsc,
 
         /// <summary>
         /// Used to describe binary state input switches.
         /// </summary>
-        EV_SW,
+        EvSw,
 
         /// <summary>
         /// Used to turn LEDs on devices on and off.
         /// </summary>
-        EV_LED,
+        EvLed,
 
         /// <summary>
         /// Used to output sound to devices.
         /// </summary>
-        EV_SND,
+        EvSnd,
 
         /// <summary>
         /// Used for autorepeating devices.
         /// </summary>
-        EV_REP,
+        EvRep,
 
         /// <summary>
         /// Used to send force feedback commands to an input device.
         /// </summary>
-        EV_FF,
+        EvFf,
 
         /// <summary>
         /// A special type for power button and switch input.
         /// </summary>
-        EV_PWR,
+        EvPwr,
 
         /// <summary>
         /// Used to receive force feedback device status.
         /// </summary>
-        EV_FF_STATUS,
+        EvFfStatus,
     }
 }

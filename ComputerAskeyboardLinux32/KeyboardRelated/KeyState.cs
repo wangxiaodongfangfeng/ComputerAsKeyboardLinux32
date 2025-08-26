@@ -1,4 +1,4 @@
-namespace ComputerAsKeyboardLinux32
+namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
     public enum KeyState
     {

@@ -1,7 +1,7 @@
 
 using PowerArgs;
 
-namespace ComputerAsKeyboardLinux32
+namespace ComputerAsKeyboardInterface
 {
     public class StartArgs
     {
@@ -24,7 +24,7 @@ namespace ComputerAsKeyboardLinux32
 
         [ArgDescription("if you use MacOS, means switch the left meta/leftwin and alt")]
         [DefaultValue(false)]
-        public bool MacOS { get; set; }
+        public bool MacOs { get; set; }
 
         [ArgDescription("mouse device")]
         [DefaultValue("mouse0")]

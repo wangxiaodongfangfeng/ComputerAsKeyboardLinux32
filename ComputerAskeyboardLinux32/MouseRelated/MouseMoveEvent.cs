@@ -1,6 +1,4 @@
-using System;
-
-namespace ComputerAsKeyboardLinux32
+namespace ComputerAsKeyboardInterface.MouseRelated
 {
     public class MouseMoveEvent : EventArgs
     {

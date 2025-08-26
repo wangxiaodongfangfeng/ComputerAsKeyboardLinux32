@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace ComputerAsKeyboardLinux32
+﻿namespace ComputerAsKeyboardInterface.MouseRelated
 {
     public class AggregateMouseReader : IDisposable
     {
-        private List<MouseReader> _readers = new List<MouseReader>();
+        private List<MouseReader>? _readers = [];
 
-        public event MouseReader.RaiseMouseMove OnMouseMove;
+        public event MouseReader.RaiseMouseMove? OnMouseMove;
 
         public AggregateMouseReader(List<string> events)
         {
-            foreach (var file in events)
+            foreach (var reader in events.Select(file => new MouseReader(file)))
             {
-                var reader = new MouseReader(file);
                 reader.OnMouseMove += ReaderOnOnMouseMove;
-                _readers.Add(reader);
+                _readers?.Add(reader);
             }
         }
 
@@ -27,26 +22,23 @@ namespace ComputerAsKeyboardLinux32
             {
                 var reader = new MouseReader(file);
                 reader.OnMouseMove += ReaderOnOnMouseMove;
-                _readers.Add(reader);
+                _readers?.Add(reader);
             }
         }
 
         private void ReaderOnOnMouseMove(MouseEvent e)
         {
-            if (OnMouseMove != null)
-            {
-                OnMouseMove.Invoke(e);
-            }
-
+            OnMouseMove?.Invoke(e);
         }
 
         public void Dispose()
         {
-            foreach (var d in _readers)
-            {
-                d.OnMouseMove -= this.ReaderOnOnMouseMove;
-                d.Dispose();
-            }
+            if (_readers != null)
+                foreach (var d in _readers)
+                {
+                    d.OnMouseMove -= this.ReaderOnOnMouseMove;
+                    d.Dispose();
+                }
 
             _readers = null;
         }

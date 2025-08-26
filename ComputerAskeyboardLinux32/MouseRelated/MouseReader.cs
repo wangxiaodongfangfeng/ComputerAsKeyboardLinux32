@@ -1,27 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-
-namespace ComputerAsKeyboardLinux32
+﻿namespace ComputerAsKeyboardInterface.MouseRelated
 {
     public class MouseReader : IDisposable
     {
         public delegate void RaiseMouseMove(MouseEvent e);
-
-        public event RaiseMouseMove OnMouseMove;
-
+        public event RaiseMouseMove? OnMouseMove;
         public delegate void RaiseMouseScroll(MouseEvent e);
 
-        public event RaiseMouseScroll OnMouseScroll;
+        public event RaiseMouseScroll? OnMouseScroll;
 
         private const int BufferLength = 3;
-
         private readonly byte[] _buffer = new byte[BufferLength];
-
         private FileStream _stream;
         private bool _disposing;
-
-        private string _path;
+        private readonly string _path;
 
         public MouseReader(string path)
         {
@@ -59,7 +50,7 @@ namespace ComputerAsKeyboardLinux32
                     {
                         if (OnMouseMove != null)
                         {
-                            OnMouseMove.Invoke(new MouseEvent() { X = dx, Y = -dy, BX = _buffer[0], BY = _buffer[1], DevicePath = _path });
+                            OnMouseMove.Invoke(new MouseEvent() { X = dx, Y = -dy, Bx = _buffer[0], By = _buffer[1], DevicePath = _path });
                         }
                     }
 

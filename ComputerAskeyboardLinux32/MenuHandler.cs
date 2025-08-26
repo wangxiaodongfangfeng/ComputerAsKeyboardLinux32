@@ -1,25 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-namespace ComputerAsKeyboardLinux32
+﻿namespace ComputerAsKeyboardInterface
 {
-
     public class MenuHandler
     {
+        private static string Menu { get; set; } = """
 
-        public static string Menu { get; set; } = @"
-|============================================================|
-| E.ExitApplication                                          |
-| B.BackToKeyboard                                           |
-| P.SetPassowrd                                              |
-| R.RefreshKeyboard                                          |
-|                                                            |
-|============================================================|";
+                                                   |============================================================|
+                                                   | E.ExitApplication                                          |
+                                                   | B.BackToKeyboard                                           |
+                                                   | P.SetPassword                                              |
+                                                   | R.RefreshKeyboard                                          |
+                                                   |                                                            |
+                                                   |============================================================|
+                                                   """;
 
         public static bool CommandMode { get; set; }
 
-        public static Action BeforeExitApplication { get; set; }
+        public static Action? BeforeExitApplication { get; set; }
 
-        public static List<List<char>> MenuChars
+        private static List<List<char>> MenuChars
         {
             get
             {
@@ -87,17 +85,14 @@ namespace ComputerAsKeyboardLinux32
                     goto readagin;
             }
         }
-        public static void HandleExitProgram()
-        {
-            if (BeforeExitApplication != null)
-            {
-                BeforeExitApplication.Invoke();
-            }
 
+        private static void HandleExitProgram()
+        {
+            BeforeExitApplication?.Invoke();
             Environment.Exit(0);
         }
 
-        public static void HandleBackToKeyboard()
+        private static void HandleBackToKeyboard()
         {
             CommandMode = false;
             ThinkpadKeyLayout.WriteKeyboardOnScreen();
@@ -110,14 +105,14 @@ namespace ComputerAsKeyboardLinux32
             MenuHandler.CommandMode = true;
             Console.WriteLine("Please Input Your Password");
             Program.Password = Console.ReadLine();
-            Console.WriteLine(string.Format("Your password is {0}, Confirm? (Y/n)", Program.Password));
+            Console.WriteLine($"Your password is {Program.Password}, Confirm? (Y/n)");
             var input = Console.ReadLine();
             if (input == "n") FunctionForSetPassword();
             CommandMode = false;
             return;
         }
 
-        public static void HandleRefreshKeyboard()
+        private static void HandleRefreshKeyboard()
         {
 
         }
