@@ -63,7 +63,7 @@ namespace ComputerAsKeyboardInterface
         {
           if (c == '\n')
           {
-            chartList = new List<char>();
+            chartList = [];
             chars.Add(chartList);
             return;
           }

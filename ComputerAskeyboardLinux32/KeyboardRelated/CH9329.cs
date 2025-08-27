@@ -550,7 +550,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         [0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00];
       mouseButtonDownPacketListInt[6] = (int)buttonCode;
 
-      byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, true);
+      var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, true);
       SendPacket(mouseButtonDownPacket);
     }
 

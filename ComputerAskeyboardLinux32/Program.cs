@@ -25,7 +25,6 @@ public static class Program
 
   private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
   private static bool _bluetooth = false;
-  private static string _currentPort = "/dev/ttyUSB0";
   private static readonly byte[] KeySlots = new byte[6];
 
   private static int ControlBytes
@@ -45,58 +44,18 @@ public static class Program
     return SpecialKeyMap.ContainsKey(eventCode);
   }
 
-  public static void Main(string[] args)
+  private static void InitPassword()
   {
-    SpecialKeyMap.Add(EventCode.RightMeta, 0x80);
-    SpecialKeyMap.Add(EventCode.RightAlt, 0x40);
-    SpecialKeyMap.Add(EventCode.RightShift, 0x20);
-    SpecialKeyMap.Add(EventCode.RightCtrl, 0x10);
-    SpecialKeyMap.Add(EventCode.LeftMeta, 0x08);
-    SpecialKeyMap.Add(EventCode.LeftAlt, 0x04);
-    SpecialKeyMap.Add(EventCode.LeftShift, 0x02);
-    SpecialKeyMap.Add(EventCode.LeftCtrl, 0x01);
-
-
-    var thinkpadKey = new ThinkpadKeyMapTo9329();
-    var thinkpadLayout = new ThinkpadKeyLayout();
     Password = "Xinyuan@199109062337";
+    if (File.Exists(".password"))
+      Password = File.ReadAllText(".password");
+  }
 
-    var chosenDevice = "/dev/ttyUSB0";
-    // Path to the directory where ttyUSB devices are located
-    var ttyUsbDirectory = "/dev/";
-    var mouseDevice = "mouse0";
-    var bluetooth = false;
-
-    StartArgs parsedArgs;
-
-    try
-    {
-      parsedArgs = Args.Parse<StartArgs>(args);
-      chosenDevice = parsedArgs.Device;
-      ttyUsbDirectory = parsedArgs.ScanPath;
-      _mute = !parsedArgs.Verbose;
-      _switchAlt = parsedArgs.MacOs;
-      mouseDevice = parsedArgs.Mouse;
-      bluetooth = parsedArgs.Bluetooth;
-      _fingerPrint = parsedArgs.Fingerprint;
-    }
-    catch (ArgException ex)
-    {
-      WriteLogOnScreen(ex.Message);
-      //Console.WriteLine(ArgUsage.GetUsage<StartArgs>());
-      return;
-    }
-
-    ThinkpadKeyLayout.WriteKeyboardOnScreen();
-
+  private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
+  {
+    var thinkpadLayout = new ThinkpadKeyLayout();
     var chars = ThinkpadKeyLayout.KeyLayoutChars;
-
-    Console.TreatControlCAsInput = true;
-    using var aggHandler1 = new AggregateInputReader();
-
-    #region ToggleKeyImplementation
-
-    aggHandler1.OnKeyPress += (e) =>
+    reader.OnKeyPress += (e) =>
     {
       if (MenuHandler.CommandMode) return;
       if (e.State == KeyState.KeyUp)
@@ -104,62 +63,45 @@ public static class Program
         ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
       }
     };
+  }
 
-    #endregion
-
-    #region AutoScan Region
-
-    if (parsedArgs.AutoScan)
+  private static string? AutoScanAvailablePortDevice()
+  {
+    try
     {
-      try
+      // Filter the list to only include ttyUSB devices
+      var ttyUsbDevices = Directory.GetFiles(_ttyUsbDirectory)
+        .Where(device => device.StartsWith("/dev/ttyUSB", StringComparison.Ordinal) ||
+                         device.StartsWith("/dev/rfcomm", StringComparison.Ordinal)).ToList();
+
+
+      switch (ttyUsbDevices.Count)
       {
-        // Get a list of all files in the /dev/ directory
-        var devices = Directory.GetFiles(ttyUsbDirectory);
-
-        // Filter the list to only include ttyUSB devices
-        var ttyUsbDevices = Directory.GetFiles(ttyUsbDirectory)
-          .Where(device => device.StartsWith("/dev/ttyUSB", StringComparison.Ordinal) ||
-                           device.StartsWith("/dev/rfcomm", StringComparison.Ordinal)).ToList();
-
-
-        switch (ttyUsbDevices.Count)
-        {
-          case <= 0:
-            WriteLogOnScreen("TTY Devices are not available, please plug in your device and try again");
-            return;
-          //if only one device is available ,choose it directly.
-          case 1:
-            chosenDevice = ttyUsbDevices[0];
-            break;
-          default:
-            // Output the list of ttyUSB devices
-            WriteLogOnScreen(
-              "There are more than one device in the folder, please specify the device you want to use by command");
-            return;
-        }
-      }
-      catch (Exception ex)
-      {
-        // Handle any exceptions that may occur
-        WriteLogOnScreen($"An error occurred: {ex.Message}");
+        case <= 0:
+          WriteLogOnScreen("TTY Devices are not available, please plug in your device and try again");
+          return null;
+        //if only one device is available ,choose it directly.
+        case 1:
+          return ttyUsbDevices[0];
+          break;
+        default:
+          // Output the list of ttyUSB devices
+          WriteLogOnScreen(
+            "There are more than one device in the folder, please specify the device you want to use by command");
+          return null;
       }
     }
-
-    #endregion
-
-    WriteLogOnScreen($"device is {chosenDevice}");
-
-    using var aggHandler = new AggregateInputReader();
-    if (File.Exists(chosenDevice))
+    catch (Exception ex)
     {
-      _keyboard = GenerateKeyboard(bluetooth, chosenDevice);
-      _bluetooth = bluetooth;
-      _currentPort = chosenDevice;
+      // Handle any exceptions that may occur
+      WriteLogOnScreen($"An error occurred: {ex.Message}");
+      return null;
     }
+  }
 
-    #region WatchFileChange auto detect serial port
-
-    var watcher = new FileSystemWatcher(ttyUsbDirectory)
+  private static void WithSerialPortChangeDetection()
+  {
+    var watcher = new FileSystemWatcher(_ttyUsbDirectory)
     {
       NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime |
                      NotifyFilters.DirectoryName
@@ -175,9 +117,8 @@ public static class Program
       {
         if (!(e.FullPath.Contains("ttyUSB") || e.FullPath.Contains("rfcomm"))) return;
         _keyboard?.Dispose();
-        _keyboard = GenerateKeyboard(bluetooth, e.FullPath);
-        _bluetooth = bluetooth;
-        _currentPort = e.FullPath;
+        _keyboard = GenerateKeyboard(_bluetooth, e.FullPath);
+        _chosenDevice = e.FullPath;
         WriteLogOnScreen($"ConnectToAnother:{e.FullPath}");
         _deviceDisconnected = false;
       }
@@ -189,130 +130,226 @@ public static class Program
     watcher.Deleted += (sender, e) =>
     {
       WriteLogOnScreen($"File Deleted:{e.FullPath}");
-      if (e.FullPath != chosenDevice) return;
+      if (e.FullPath != _chosenDevice) return;
       WriteLogOnScreen("Device is removed , can't use now");
       _deviceDisconnected = true;
     };
+  }
 
-    #endregion
-
-    aggHandler.OnKeyPress += (KeyPressEvent e) =>
-    {
-      if (!_mute)
-      {
-        WriteLogOnScreen($"Code:{e.Code} State:{e.State},Event:{e.DevicePath}");
-      }
-
-      // take no action when toggle is off
-      if (!_toggle || _deviceDisconnected) return;
-
-      var keyCode = e.Code;
-      switch (e.Code)
-      {
-        //MacOS use back and forward to switch screen
-        case EventCode.Back or EventCode.Forward when _switchAlt:
-          HandleBackAndForwardForMacOs(keyCode, e.State);
-          return;
-        //MacOS use Compose to show menu
-        case EventCode.Compose when _switchAlt:
-          break;
-        case EventCode.LeftMouse:
-        case EventCode.RightMouse:
-        case EventCode.MiddleMouse:
-          HandleMouseKey(e, _switchAlt);
-          return;
-      }
-
-      //When I was working in MacOS ,I should switch the left alt and meta
-      //TODO: we should refactor this code, because it looks ugly now.
-      if (_switchAlt && keyCode is EventCode.LeftMeta or EventCode.LeftAlt)
-      {
-        keyCode = keyCode == EventCode.LeftMeta ? EventCode.LeftAlt : EventCode.LeftMeta;
-      }
-
-      if (e.State is KeyState.KeyDown or KeyState.KeyHold)
-      {
-        #region HandleAutoInputPassword When Ctrl+F1 and Ctrl + F2 Happen
-
-        switch (e.Code)
-        {
-          case EventCode.F1 when ControlBytes == 0x01:
-            HandleInputPassword();
-            return;
-          case EventCode.F10 when ControlBytes == 0x01:
-            HandleRefreshKeyboard();
-            return;
-        }
-
-        #endregion
-
-        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte))
-        {
-          //if we don't have duplicated key,find a new slot
-          if (!KeySlots.Contains(keyByte))
-          {
-            var index = KeySlots.ToList().FindIndex(key => key == 0);
-            KeySlots[index] = keyByte;
-          }
-
-          _keyboard?.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
-            KeySlots[4], KeySlots[5]);
-          //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
-        }
-
-        if (thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out var mediaKeyByte))
-        {
-          _keyboard?.KeyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
-        }
-
-        if (IsSpecialKey(keyCode)) SpecialKeyStatus[keyCode] = true;
-      }
-      else
-      {
-        if (thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte))
-        {
-          var index = KeySlots.ToList().FindIndex(key => key == keyByte);
-          KeySlots[index] = 0;
-          _keyboard?.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
-            KeySlots[4], KeySlots[5]);
-          //WriteLogOnScreen(string.Format("{0},{1},{3},{4},{5}", _keyslots[0], _keyslots[1], _keyslots[2], _keyslots[3], _keyslots[4], _keyslots[5]));
-        }
-
-        List<byte>? mediaKeyByte;
-        if (thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out mediaKeyByte))
-        {
-          _keyboard?.KeyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
-        }
-
-        if (IsSpecialKey(keyCode)) SpecialKeyStatus[keyCode] = false;
-      }
-    };
-
-    #region handle toggle
-
+  private static void EnableKeyboardSwitch(this AggregateInputReader reader)
+  {
     //handle toggle event ,sometime ,we want to turn off the keyboard
-    aggHandler.OnKeyPress += (e) =>
+    reader.OnKeyPress += (e) =>
     {
       if (e.Code != EventCode.Prog1 || e.State != KeyState.KeyUp) return;
       _toggle = !_toggle;
       WriteLogOnScreen($"Toggle is {(_toggle ? "on" : "off")} now");
     };
+  }
 
-    #endregion
-
-    #region handle mute
-
-    //handle mute event, we don't like log to be printed
-    aggHandler.OnKeyPress += (e) =>
+  private static void EnableMuteSwitch(this AggregateInputReader reader)
+  {
+    reader.OnKeyPress += (e) =>
     {
       if (e.Code != EventCode.Mute || e.State != KeyState.KeyUp) return;
       _mute = !_mute;
       WriteLogOnScreen($"Log is {(_mute ? "on" : "off")} now");
     };
+  }
+
+  private static string? _chosenDevice = "/dev/ttyUSB0";
+
+  // Path to the directory where ttyUSB devices are located
+  private static string _ttyUsbDirectory = "/dev/";
+  private static string _mouseDevice = "mouse0";
+
+  public static void Main(string[] args)
+  {
+    InitSpecialKeyMap();
+    InitPassword();
+
+
+    StartArgs parsedArgs;
+
+    try
+    {
+      parsedArgs = Args.Parse<StartArgs>(args);
+      _chosenDevice = parsedArgs.Device;
+      _ttyUsbDirectory = parsedArgs.ScanPath;
+      _mute = !parsedArgs.Verbose;
+      _switchAlt = parsedArgs.MacOs;
+      _mouseDevice = parsedArgs.Mouse;
+      _bluetooth = parsedArgs.Bluetooth;
+      _fingerPrint = parsedArgs.Fingerprint;
+    }
+    catch (ArgException ex)
+    {
+      WriteLogOnScreen(ex.Message);
+      return;
+    }
+
+    ThinkpadKeyLayout.WriteKeyboardOnScreen();
+
+
+    Console.TreatControlCAsInput = true;
+    using var aggHandler1 = new AggregateInputReader();
+    aggHandler1.WithKeyTogglingOnScreen();
+
+    if (parsedArgs.AutoScan)
+    {
+      _chosenDevice = AutoScanAvailablePortDevice();
+      if (_chosenDevice == null) return;
+    }
+
+    if (!File.Exists(_chosenDevice)) return;
+    WriteLogOnScreen($"device is {_chosenDevice}");
+    using var aggHandler = new AggregateInputReader();
+    _keyboard = GenerateKeyboard(_bluetooth, _chosenDevice);
+    WithSerialPortChangeDetection();
+
+    aggHandler.EnableMainFunction();
+    aggHandler.EnableKeyboardSwitch();
+    aggHandler.EnableMuteSwitch();
+    aggHandler.EnableMenuFunction();
+    EnableMouseTrack(_mouseDevice);
+
+    Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
+    while (true)
+    {
+      Console.ReadKey(intercept: true);
+      if (ExitInNext) break;
+    }
+
+    _keyboard?.KeyUpAll();
+  }
+
+  private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)
+  {
+    var keyCode = e.Code;
+    switch (e.Code)
+    {
+      //MacOS use back and forward to switch screen
+      case EventCode.Back or EventCode.Forward when isMacOs:
+        HandleBackAndForwardForMacOs(keyCode, e.State);
+        return true;
+      //MacOS use Compose to show menu
+      case EventCode.Compose when isMacOs:
+        break;
+      case EventCode.LeftMouse:
+      case EventCode.RightMouse:
+      case EventCode.MiddleMouse:
+      case EventCode.Touch:
+        HandleMouseKey(e, isMacOs);
+        return true;
+    }
+
+    return false;
+  }
+
+  private static bool InterceptSpecialKeyComposite(KeyPressEvent e)
+  {
+    #region HandleAutoInputPassword When Ctrl+F1 and Ctrl + F2 Happen
+
+    switch (e.Code)
+    {
+      case EventCode.F1 when ControlBytes == 0x01:
+        HandleInputPassword();
+        return true;
+      case EventCode.F10 when ControlBytes == 0x01:
+        HandleRefreshKeyboard();
+        return true;
+      default:
+        break;
+    }
+
+    #endregion
+
+    return false;
+  }
+
+  private static void EnableMainFunction(this AggregateInputReader reader)
+  {
+    var thinkpadKey = new ThinkpadKeyMapTo9329();
+    reader.OnKeyPress += (e) =>
+    {
+      if (!_mute) WriteLogOnScreen($"Code:{e.Code} State:{e.State},Event:{e.DevicePath}");
+
+      // take no action when toggle is off
+      if (!_toggle || _deviceDisconnected) return;
+
+      var result = InterceptSpecialKey(e, _switchAlt);
+      if (result) return;
+      var keyCode = e.Code;
+      //When I was working in MacOS ,I should switch the left alt and meta
+      keyCode = _switchAlt ? SwitchMetaAndAlt(keyCode) : keyCode;
+
+      var isPush = e.State is KeyState.KeyDown or KeyState.KeyHold;
+      if (isPush)
+      {
+        result = InterceptSpecialKeyComposite(e);
+        if (result) return;
+      }
+
+      SwitchKeySlot(keyCode, isPush, thinkpadKey);
+      SwitchMedialKey(keyCode, isPush, thinkpadKey);
+      if (IsSpecialKey(keyCode)) SpecialKeyStatus[keyCode] = isPush;
+    };
+  }
+
+  private static void SwitchMedialKey(EventCode keyCode, bool push, ThinkpadKeyMapTo9329 thinkpadKey)
+  {
+    if (!thinkpadKey.MediaKeyMap.TryGetValue((int)keyCode, out var mediaKeyByte)) return;
+    if (push)
+      _keyboard?.KeyDown(KeyGroup.MediaKey, mediaKeyByte[0], mediaKeyByte[1], mediaKeyByte[2], mediaKeyByte[3]);
+    else
+      _keyboard?.KeyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
+  }
+
+  private static void SwitchKeySlot(EventCode keyCode, bool push, ThinkpadKeyMapTo9329 thinkpadKey)
+  {
+    if (!thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte)) return;
+    if (push)
+    {
+      //push
+      //if we don't have duplicated key,find a new slot
+      if (!KeySlots.Contains(keyByte))
+      {
+        var index = KeySlots.ToList().FindIndex(key => key == 0);
+        KeySlots[index] = keyByte;
+      }
+    }
+    else
+    {
+      //pop
+      var index = KeySlots.ToList().FindIndex(key => key == keyByte);
+      KeySlots[index] = 0;
+    }
+
+    SendCharKeyDown();
+  }
+
+  private static void SendCharKeyDown()
+  {
+    _keyboard?.KeyDown(KeyGroup.CharKey, 0x00, KeySlots[0], KeySlots[1], KeySlots[2], KeySlots[3],
+      KeySlots[4], KeySlots[5]);
+  }
+
+  private static EventCode SwitchMetaAndAlt(EventCode keyCode)
+  {
+    if (keyCode is EventCode.LeftMeta or EventCode.LeftAlt)
+    {
+      keyCode = keyCode == EventCode.LeftMeta ? EventCode.LeftAlt : EventCode.LeftMeta;
+    }
+
+    return keyCode;
+  }
+
+  private static void EnableMenuFunction(this AggregateInputReader reader)
+  {
     MenuHandler.BeforeExitApplication = () => { _keyboard?.KeyUpAll(); };
     // long touch fn will show menu;
     var lastCodeCount = 0;
-    aggHandler.OnKeyPress += (e) =>
+    reader.OnKeyPress += (e) =>
     {
       if (e.Code != EventCode.Wakeup)
       {
@@ -326,48 +363,30 @@ public static class Program
 
       lastCodeCount = 0;
     };
+  }
 
-    #endregion
-
+  private static void EnableMouseTrack(string mouseDevice)
+  {
     var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
     mouseReader.OnMouseMove += (e) =>
-    {
-      if (_keyboard == null) return;
-      if (MouseKeyHold)
-      {
-        _keyboard.MouseMoveRel(e.X, e.Y, true, HoldMouseKey);
-      }
-      else
-      {
-        _keyboard.MouseMoveRel(e.X, e.Y);
-      }
-    };
+      _keyboard?.MouseMoveRel(e.X, e.Y, MouseKeyHold, MouseKeyHold ? HoldMouseKey : MouseButtonCode.Left);
+    mouseReader.OnMouseScroll += (e) => { _keyboard?.MouseScrollForMac(e.ScrollCount); };
+  }
 
-    mouseReader.OnMouseScroll += (e) =>
-    {
-      if (_keyboard == null) return;
-      _keyboard.MouseScrollForMac(e.ScrollCount);
-    };
-
-    System.Console.CancelKeyPress += (sender, eventArgs) =>
-    {
-      if (_keyboard == null) return;
-      _keyboard.KeyUpAll();
-    };
-    while (true)
-    {
-      var keyInfo = Console.ReadKey(intercept: true);
-      if (ExitInNext)
-      {
-        break;
-      }
-    }
-
-    _keyboard.KeyUpAll();
+  private static void InitSpecialKeyMap()
+  {
+    SpecialKeyMap.Add(EventCode.RightMeta, 0x80);
+    SpecialKeyMap.Add(EventCode.RightAlt, 0x40);
+    SpecialKeyMap.Add(EventCode.RightShift, 0x20);
+    SpecialKeyMap.Add(EventCode.RightCtrl, 0x10);
+    SpecialKeyMap.Add(EventCode.LeftMeta, 0x08);
+    SpecialKeyMap.Add(EventCode.LeftAlt, 0x04);
+    SpecialKeyMap.Add(EventCode.LeftShift, 0x02);
+    SpecialKeyMap.Add(EventCode.LeftCtrl, 0x01);
   }
 
   /// <summary>
-  /// if the Mousekey is Hold now
+  /// if the MouseKey is Hold now
   /// </summary>
   private static bool MouseKeyHold { get; set; }
 
@@ -375,24 +394,18 @@ public static class Program
 
   private static void HandleMouseKey(KeyPressEvent e, bool macos)
   {
-    if (_keyboard == null)
-      return;
+    if (_keyboard == null) return;
 
-    MouseButtonCode mouse = MouseButtonCode.Left;
-    switch (e.Code)
+    var mouse = e.Code switch
     {
-      case EventCode.LeftMouse:
-        mouse = MouseButtonCode.Left;
-        break;
-      case EventCode.RightMouse:
-        mouse = MouseButtonCode.Right;
-        break;
-      case EventCode.MiddleMouse:
-        mouse = MouseButtonCode.Middle;
-        break;
-    }
+      EventCode.LeftMouse => MouseButtonCode.Left,
+      EventCode.RightMouse => MouseButtonCode.Right,
+      EventCode.MiddleMouse => MouseButtonCode.Middle,
+      EventCode.Touch => MouseButtonCode.Left,
+      _ => MouseButtonCode.Left
+    };
 
-    if (e.State == KeyState.KeyDown || e.State == KeyState.KeyHold)
+    if (e.State is KeyState.KeyDown or KeyState.KeyHold)
     {
       if (macos)
       {
@@ -479,8 +492,9 @@ public static class Program
   private static void HandleRefreshKeyboard()
   {
     _keyboard?.Dispose();
-    _keyboard = GenerateKeyboard(_bluetooth, _currentPort);
-    WriteLogOnScreen($"Refreshed the keyboard with {_bluetooth},{_currentPort}");
+    if (_chosenDevice == null) return;
+    _keyboard = GenerateKeyboard(_bluetooth, _chosenDevice);
+    WriteLogOnScreen($"Refreshed the keyboard with {_bluetooth},{_chosenDevice}");
   }
 
   private static void HandleInputPassword()
