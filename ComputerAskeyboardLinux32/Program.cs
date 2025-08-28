@@ -1,4 +1,5 @@
-﻿using ComputerAsKeyboardInterface.FingerPrint;
+﻿using System.Collections.Concurrent;
+using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
 using ComputerAsKeyboardInterface.MouseRelated;
 using PowerArgs;
@@ -478,22 +479,25 @@ public static class Program
         }
     }
 
-    private static readonly Queue<string> Logs = new Queue<string>();
+    private static readonly ConcurrentQueue<string> Logs = new();
 
     public static void WriteLogOnScreen(string log)
     {
-        if (MenuHandler.CommandMode) return;
-        if (Logs.Count >= 10)
+        lock (Logs)
         {
-            Logs.Dequeue();
-        }
+            if (MenuHandler.CommandMode) return;
+            if (Logs.Count >= 10)
+            {
+                Logs.TryDequeue(out var result);
+            }
 
-        Logs.Enqueue(log);
-        var index = 0;
-        foreach (var content in Logs)
-        {
-            Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
-            Console.WriteLine(content);
+            Logs.Enqueue(log);
+            var index = 0;
+            foreach (var content in Logs)
+            {
+                Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
+                Console.WriteLine(content);
+            }
         }
     }
 
