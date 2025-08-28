@@ -24,7 +24,7 @@ public static class Program
   private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
   private static bool _bluetooth = false;
   private static readonly byte[] KeySlots = new byte[6];
-
+  public static bool UseQueue { get; set; } = false;
   private static int ControlBytes
   {
     get
@@ -179,6 +179,7 @@ public static class Program
       _mouseDevice = parsedArgs.Mouse;
       _bluetooth = parsedArgs.Bluetooth;
       _fingerPrint = parsedArgs.Fingerprint;
+      UseQueue = parsedArgs.Queue;
     }
     catch (ArgException ex)
     {

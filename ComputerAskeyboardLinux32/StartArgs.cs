@@ -34,9 +34,13 @@ namespace ComputerAsKeyboardInterface
         [ArgDescription("start-bluetooth-version")]
         [DefaultValue(false)]
         public bool Bluetooth { get; set; }
+        
         [ArgDescription("use fingerprint")]
         [DefaultValue(false)]
         public bool Fingerprint { get; set; }
-    
+        
+        [ArgDescription("If use queue to send command")]
+        [DefaultValue(false)]
+        public bool Queue { get; set; }
     }
 }

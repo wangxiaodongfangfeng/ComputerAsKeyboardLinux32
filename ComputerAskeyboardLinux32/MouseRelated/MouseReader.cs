@@ -19,7 +19,7 @@
             _path = path;
             _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            new Task(new Action(Run)).Start();
+            new Task(Run).Start();
         }
 
         private void Run()
@@ -31,31 +31,19 @@
 
                 try
                 {
-                    _stream.Read(_buffer, 0, BufferLength);
-                    int dx = _buffer[1] - ((_buffer[0] & 0x10) != 0 ? 256 : 0);
-                    int dy = _buffer[2] - ((_buffer[0] & 0x20) != 0 ? 256 : 0);
-
-
-                    int button = _buffer[0] & 0x04; // Extract button state
+                    _stream.ReadExactly(_buffer, 0, BufferLength);
+                    var dx = _buffer[1] - ((_buffer[0] & 0x10) != 0 ? 256 : 0);
+                    var dy = _buffer[2] - ((_buffer[0] & 0x20) != 0 ? 256 : 0);
+                    var button = _buffer[0] & 0x04; // Extract button state
                     //middle button is down
                     if (button > 0)
                     {
-                        if (OnMouseScroll != null)
-                        {
-                            OnMouseScroll.Invoke(new MouseEvent() { ScrollCount = -dy });
-                        }
-
+                        OnMouseScroll?.Invoke(new MouseEvent() { ScrollCount = -dy });
                     }
                     else
                     {
-                        if (OnMouseMove != null)
-                        {
-                            OnMouseMove.Invoke(new MouseEvent() { X = dx, Y = -dy, Bx = _buffer[0], By = _buffer[1], DevicePath = _path });
-                        }
+                        OnMouseMove?.Invoke(new MouseEvent() { X = dx, Y = -dy, Bx = _buffer[0], By = _buffer[1], DevicePath = _path });
                     }
-
-
-
                 }
                 catch (Exception e)
                 {

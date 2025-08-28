@@ -11,6 +11,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private static readonly ConcurrentQueue<byte[]> Buffer = new();
         private readonly CancellationTokenSource? _cancellationTokenSource;
 
+
         public Ch9329(string portName = "COM5", int xSize = 1920, int ySize = 1080, int baudRate = 9600)
         {
             _cancellationTokenSource = new CancellationTokenSource();
@@ -21,13 +22,17 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             CreateCharKeyTable();
             //CreateMediaKeyTable();
             //CreateKeyTable();
-            _ = Task.Run(() => SerialPortDataHandler(_cancellationTokenSource.Token));
+            if (Program.UseQueue)
+            {
+                _ = Task.Run(() => SerialPortDataHandler(_cancellationTokenSource.Token));
+            }
         }
 
-        private static async Task SerialPortDataHandler(CancellationToken token)
+        private static Task SerialPortDataHandler(CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
+                //await Task.Delay(20, token);
                 var result = Buffer.TryDequeue(out var data);
                 if (!result) continue;
                 try
@@ -39,11 +44,13 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                     Program.WriteLogOnScreen("Failed Send data to serial port");
                     continue;
                 }
-                await Task.Delay(20, token);
             }
+
+            return Task.CompletedTask;
         }
 
         private Dictionary<string, byte[]> _charKeyTable;
+
         /// <summary>
         /// create 109A CharKeyTable
         /// </summary>
@@ -163,7 +170,19 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         private static void SendPacket(byte[] data)
         {
-            Buffer.Enqueue(data);
+            if (Program.UseQueue)
+                Buffer.Enqueue(data);
+            else
+                SendPacketDirectly(data);
+        }
+
+        private static void SendPacketDirectly(byte[] data)
+        {
+            if (_serialPort == null) return;
+            lock (_serialPort)
+            {
+                _serialPort.Write(data, 0, data.Length);
+            }
         }
 
         private static byte[] CreatePacketArray(List<int> arrList, bool addCheckSum)
