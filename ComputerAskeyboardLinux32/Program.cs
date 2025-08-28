@@ -8,8 +8,6 @@ namespace ComputerAsKeyboardInterface;
 public static class Program
 {
   //initialize key-layout
-  private const string KeyboardLayout = ThinkpadKeyLayout.KeyboardLayoutString;
-
   private static bool _toggle = true;
   private static bool _mute = false;
   private static bool _switchAlt = false;

@@ -8,22 +8,16 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         public delegate void RaiseMouseMove(MouseMoveEvent e);
 
-        public event RaiseKeyPress OnKeyPress;
-        public event RaiseMouseMove OnMouseMove;
+        public event RaiseKeyPress? OnKeyPress;
+        public event RaiseMouseMove? OnMouseMove;
 
-        private int _bufferLength = 16;
-
-        private byte[] _buffer;
-
-        private FileStream _stream;
+        private readonly int _bufferLength;
+        private readonly byte[] _buffer;
+        private FileStream? _stream;
         private bool _disposing;
+        private readonly string _path;
 
-        private string _path = "";
-
-        private bool Platform64
-        {
-            get { return Environment.Is64BitOperatingSystem; }
-        }
+        private static bool Platform64 => Environment.Is64BitOperatingSystem;
 
         public InputReader(string path)
         {
@@ -31,7 +25,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             _buffer = new byte[_bufferLength];
             _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             this._path = path;
-            new Task(new Action(Run)).Start();
+            new Task(Run).Start();
             //Task.Run(new Action(Run));
         }
 
@@ -43,12 +37,12 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 if (_disposing)
                     break;
 
-                _stream.Read(_buffer, 0, _bufferLength);
+                _stream?.ReadExactly(_buffer, 0, _bufferLength);
 
-                var type = BitConverter.ToInt16(new[] { _buffer[offset + 1], _buffer[offset + 2] }, 0);
-                var code = BitConverter.ToInt16(new[] { _buffer[offset + 3], _buffer[offset + 4] }, 0);
+                var type = BitConverter.ToInt16([_buffer[offset + 1], _buffer[offset + 2]], 0);
+                var code = BitConverter.ToInt16([_buffer[offset + 3], _buffer[offset + 4]], 0);
                 var value = BitConverter.ToInt32(
-                    new[] { _buffer[offset + 5], _buffer[offset + 6], _buffer[offset + 7], _buffer[offset + 8] }, 0);
+                    [_buffer[offset + 5], _buffer[offset + 6], _buffer[offset + 7], _buffer[offset + 8]], 0);
 
                 var eventType = (EventType)type;
 
@@ -60,11 +54,9 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                     case EventType.EvRel:
                         var axis = (MouseAxis)code;
                         var e = new MouseMoveEvent(axis, value);
-                        if (OnMouseMove != null)
-                        {
-                            OnMouseMove.Invoke(e);
-                        }
-
+                        OnMouseMove?.Invoke(e);
+                        break;
+                    default:
                         break;
                 }
             }
@@ -74,18 +66,17 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         {
             var c = (EventCode)code;
             var s = (KeyState)value;
-            var e = new KeyPressEvent(c, s);
-            e.DevicePath = this._path;
-            if (OnKeyPress != null)
+            var e = new KeyPressEvent(c, s)
             {
-                OnKeyPress.Invoke(e);
-            }
+                DevicePath = this._path
+            };
+            OnKeyPress?.Invoke(e);
         }
 
         public void Dispose()
         {
             _disposing = true;
-            _stream.Dispose();
+            _stream?.Dispose();
             _stream = null;
         }
     }
