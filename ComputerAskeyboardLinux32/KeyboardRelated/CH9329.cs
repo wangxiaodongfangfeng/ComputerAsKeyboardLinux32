@@ -6,8 +6,10 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
     public class Ch9329 : IKeyboard
     {
         private readonly int _xSize;
+
         private readonly int _ySize;
-        private static SerialPort? _serialPort;
+
+        //private static SerialPort? _serialPort;
         private static readonly ConcurrentQueue<byte[]> Buffer = new();
         private readonly CancellationTokenSource? _cancellationTokenSource;
 
@@ -17,8 +19,8 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             _cancellationTokenSource = new CancellationTokenSource();
             _xSize = xSize;
             _ySize = ySize;
-            _serialPort = new SerialPort(portName, baudRate);
-            _serialPort.Open();
+            //_serialPort = new SerialPort(portName, baudRate);
+            //_serialPort.Open();
             CreateCharKeyTable();
             //CreateMediaKeyTable();
             //CreateKeyTable();
@@ -37,7 +39,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 if (!result) continue;
                 try
                 {
-                    if (data != null) _serialPort?.Write(data, 0, data.Length);
+                    if (data != null) SerialPortExtension.CurrentSerialPort?.Write(data, 0, data.Length);
                 }
                 catch (Exception)
                 {
@@ -178,10 +180,10 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         private static void SendPacketDirectly(byte[] data)
         {
-            if (_serialPort == null) return;
-            lock (_serialPort)
+            if (SerialPortExtension.CurrentSerialPort == null) return;
+            lock (SerialPortExtension.CurrentSerialPort)
             {
-                _serialPort.Write(data, 0, data.Length);
+                SerialPortExtension.CurrentSerialPort.Write(data, 0, data.Length);
             }
         }
 
@@ -491,8 +493,8 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         public void Dispose()
         {
             _cancellationTokenSource?.Cancel();
-            _serialPort.Close();
-            _serialPort.Dispose();
+            //_serialPort.Close();
+            //_serialPort.Dispose();
         }
     }
 
