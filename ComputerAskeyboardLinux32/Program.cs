@@ -198,6 +198,10 @@ public static class Program
             _chosenDevice = AutoScanAvailablePortDevice();
             if (_chosenDevice == null) return;
         }
+        else
+        {
+            SerialPortExtension.AddSerialPort(_chosenDevice);
+        }
 
         if (!File.Exists(_chosenDevice)) return;
         WriteLogOnScreen($"device is {_chosenDevice}");
@@ -493,7 +497,7 @@ public static class Program
 
             Logs.Enqueue(log);
             var index = 0;
-            foreach (var content in Logs)
+            foreach (var content in Logs.ToList())
             {
                 Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
                 Console.WriteLine(content);

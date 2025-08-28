@@ -7,7 +7,7 @@ namespace ComputerAsKeyboardInterface
     {
 
         [ArgDescription("whether scan device automatically")]
-        [DefaultValue(false)]
+        [DefaultValue(true)]
         public bool AutoScan { get; set; }
 
         [ArgDescription("where to scan when Device is not specified")]
