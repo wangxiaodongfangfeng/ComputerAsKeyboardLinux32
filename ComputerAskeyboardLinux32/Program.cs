@@ -27,7 +27,7 @@ public static class Program
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
 
-    public static List<string>? InputDevices { get; private set; } = [];
+    private static List<string>? InputDevices { get; set; } = [];
 
     private static int ControlBytes
     {
@@ -195,7 +195,7 @@ public static class Program
         File.WriteAllLines(".devices", chosenList);
 
         InputDevices = chosenList.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
-
+        
         return true;
     }
 
@@ -442,8 +442,15 @@ public static class Program
     {
         var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
         mouseReader.OnMouseMove += (e) =>
+        {
+            if (KeyboardDisabled) return;
             _keyboard?.MouseMoveRel(e.X, e.Y, MouseKeyHold, MouseKeyHold ? HoldMouseKey : MouseButtonCode.Left);
-        mouseReader.OnMouseScroll += (e) => { _keyboard?.MouseScrollForMac(e.ScrollCount); };
+        };
+        mouseReader.OnMouseScroll += (e) =>
+        {
+            if (KeyboardDisabled) return;
+            _keyboard?.MouseScrollForMac(e.ScrollCount);
+        };
     }
 
     private static void InitSpecialKeyMap()

@@ -1,15 +1,9 @@
 namespace ComputerAsKeyboardInterface.MouseRelated
 {
-    public class MouseMoveEvent : EventArgs
+    public class MouseMoveEvent(MouseAxis axis, int amount) : EventArgs
     {
-        public MouseMoveEvent(MouseAxis axis, int amount)
-        {
-            Axis = axis;
-            Amount = amount;
-        }
+        public MouseAxis Axis { get; set; } = axis;
 
-        public MouseAxis Axis { get; set; }
-
-        public int Amount { get; set; }
+        public int Amount { get; set; } = amount;
     }
 }

@@ -32,21 +32,21 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private void Run()
         {
             var offset = _buffer.Length == 24 ? 15 : 7;
-            Program.WriteLogOnScreen($"Start Monitoring Program for input {_path}");
-            var started = false;
+            //Program.WriteLogOnScreen($"Start Monitoring Program for input {_path}");
+            //var started = false;
             while (true)
             {
                 if (_disposing)
                     break;
-                if (!started) Program.WriteLogOnScreen($"Start to Read data from input stream {_path}");
+                //if (!started) Program.WriteLogOnScreen($"Start to Read data from input stream {_path}");
 
                 _stream?.ReadExactly(_buffer, 0, _bufferLength);
 
-                if (!started)
-                {
-                    Program.WriteLogOnScreen($"Read data from input stream {_path}");
-                    started = true;
-                }
+                //if (!started)
+                //{
+                //Program.WriteLogOnScreen($"Read data from input stream {_path}");
+                //started = true;
+                //}
 
 
                 var type = BitConverter.ToInt16([_buffer[offset + 1], _buffer[offset + 2]], 0);
