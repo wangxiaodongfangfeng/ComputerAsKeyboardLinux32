@@ -287,9 +287,22 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                      where _charKeyTable.ContainsKey(s.ToString())
                      select _charKeyTable[s.ToString()])
             {
-                KeyDown(KeyGroup.CharKey, 0x00, dat[1], (dat[0] == 0x02 ? (byte)0xE1 : (byte)0x00), 0, 0, 0, 0);
+                if (dat[0] == 0x02)
+                {
+                    KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0xE1, 0, 0, 0, 0);
+                    Thread.Sleep(10);
+                    KeyDown(KeyGroup.CharKey, 0x00, dat[1], 0xE1, 0, 0, 0, 0);
+                    Thread.Sleep(10);
+                    KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0xE1, 0, 0, 0, 0);
+                }
+                else
+                {
+                    KeyDown(KeyGroup.CharKey, 0x00, dat[1], 0x00, 0, 0, 0, 0);
+                }
+
                 Thread.Sleep(10);
                 KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0x00, 0, 0, 0, 0);
+
                 //CharKeyType(0x00, dat[1], dat[0]);
             }
         }
