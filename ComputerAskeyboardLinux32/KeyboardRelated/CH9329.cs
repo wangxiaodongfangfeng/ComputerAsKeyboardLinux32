@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.IO.Ports;
+using Gdk;
 
 namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
@@ -286,7 +287,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                      where _charKeyTable.ContainsKey(s.ToString())
                      select _charKeyTable[s.ToString()])
             {
-                KeyDown(KeyGroup.CharKey, 0x00, dat[1], dat[0], 0, 0, 0, 0);
+                KeyDown(KeyGroup.CharKey, 0x00, dat[1], (dat[0] == 0x02 ? (byte)0xE1 : (byte)0x00), 0, 0, 0, 0);
                 Thread.Sleep(10);
                 KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0x00, 0, 0, 0, 0);
                 //CharKeyType(0x00, dat[1], dat[0]);

@@ -585,6 +585,7 @@ public static class Program
         if (!_fingerPrint)
         {
             if (Password != null) _keyboard?.CharKeyType(Password);
+            return;
         }
 
         var attempts = 0;
