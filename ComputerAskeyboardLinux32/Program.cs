@@ -25,7 +25,9 @@ public static class Program
     private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
     private static bool _bluetooth = false;
     private static readonly byte[] KeySlots = new byte[6];
-    public static bool UseQueue { get; set; } = false;
+    public static bool UseQueue { get; private set; } = false;
+
+    public static List<string>? InputDevices { get; private set; } = [];
 
     private static int ControlBytes
     {
@@ -51,16 +53,24 @@ public static class Program
             Password = File.ReadAllText(".password");
     }
 
+    private static void LoadDevicesMapping()
+    {
+        DeviceResolver.GetInputDevicesFromProc();
+        if (!File.Exists(".devices")) return;
+        var devices = File.ReadAllLines(".devices");
+        InputDevices = devices.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
+    }
+
     private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
     {
         var thinkpadLayout = new ThinkpadKeyLayout();
         var chars = ThinkpadKeyLayout.KeyLayoutChars;
-        reader.OnKeyPress += (e) =>
+        reader.OnKeyPress += async (e) =>
         {
             if (MenuHandler.CommandMode) return;
             if (e.State == KeyState.KeyUp)
             {
-                ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
+                await ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
             }
         };
     }
@@ -154,6 +164,41 @@ public static class Program
         };
     }
 
+    private static bool HandleInitCommandsWhenInit(string[] args)
+    {
+        if (args.Length == 0 || args[0] != "init") return false;
+        Console.WriteLine("Please choose the input device you want to monitor:");
+        Console.WriteLine("Multi chosen please use comma to split");
+        var inputDevices = new List<string>();
+        var index = 0;
+        DeviceResolver.InputDevicesMapping.ForEach(kv =>
+        {
+            Console.WriteLine($"{index++}. {kv.Key}");
+            inputDevices.Add(kv.Key);
+        });
+        var line = Console.ReadLine();
+        if (string.IsNullOrEmpty(line)) Console.WriteLine("Invalid input");
+
+        if (line != null && line.Split(',').Any(s => !int.TryParse(s, out _)))
+            Console.WriteLine("Invalid input");
+
+        var chosenIndexes = line.Split(',').Select(int.Parse).ToList();
+
+        var chosenList = new List<string>();
+
+        chosenIndexes.ForEach(i =>
+        {
+            if (i < 0 || i >= inputDevices.Count) return;
+            chosenList.Add(inputDevices[i]);
+        });
+
+        File.WriteAllLines(".devices", chosenList);
+
+        InputDevices = chosenList.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
+
+        return true;
+    }
+
     private static string? _chosenDevice = "/dev/ttyUSB0";
 
     // Path to the directory where ttyUSB devices are located
@@ -164,6 +209,10 @@ public static class Program
     {
         InitSpecialKeyMap();
         InitPassword();
+        LoadDevicesMapping();
+
+
+        if (HandleInitCommandsWhenInit(args)) return;
 
 
         StartArgs parsedArgs;
@@ -190,7 +239,7 @@ public static class Program
 
 
         Console.TreatControlCAsInput = true;
-        using var aggHandler1 = new AggregateInputReader();
+        using var aggHandler1 = new AggregateInputReader(InputDevices);
         aggHandler1.WithKeyTogglingOnScreen();
 
         if (parsedArgs.AutoScan)
@@ -205,7 +254,7 @@ public static class Program
 
         if (!File.Exists(_chosenDevice)) return;
         WriteLogOnScreen($"device is {_chosenDevice}");
-        using var aggHandler = new AggregateInputReader();
+        using var aggHandler = new AggregateInputReader(InputDevices);
         _keyboard = GenerateKeyboard(_bluetooth, _chosenDevice);
         WithSerialPortChangeDetection();
 
@@ -281,7 +330,7 @@ public static class Program
         return false;
     }
 
-    public static bool KeyboardDisabled => !_toggle || _deviceDisconnected;
+    private static bool KeyboardDisabled => !_toggle || _deviceDisconnected;
 
     private static void EnableMainFunction(this AggregateInputReader reader)
     {

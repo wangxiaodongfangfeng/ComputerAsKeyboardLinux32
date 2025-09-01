@@ -13,7 +13,7 @@
                                                    |============================================================|
                                                    """;
 
-        public static bool CommandMode { get; set; }
+        public static bool CommandMode { get; private set; }
 
         public static Action? BeforeExitApplication { get; set; }
 
@@ -45,7 +45,7 @@
             Console.CursorVisible = true;
             Console.SetCursorPosition(0, 0);
             CommandMode = true;
-
+            Console.BackgroundColor = ConsoleColor.Black;
             var width = Console.WindowWidth;
             var height = Console.WindowHeight;
 
@@ -58,7 +58,7 @@
                 {
                     Console.Write(" ");
                 }
-                chars.ForEach(c => { Console.Write(c); });
+                chars.ForEach(Console.Write);
                 Console.WriteLine();
             });
         readagin:
