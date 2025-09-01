@@ -360,7 +360,7 @@ namespace ComputerAsKeyboardInterface
             return new Tuple<int, int, int, int>(startRow, startColumn + StartColumn, endRow, endColumn);
         }
 
-        public static async Task ToggleKeys(List<List<char>> chars, Tuple<int, int, int, int> values)
+        public static void ToggleKeys(List<List<char>> chars, Tuple<int, int, int, int> values)
         {
             var sr = values.Item1;
             var sc = values.Item2;
@@ -377,8 +377,8 @@ namespace ComputerAsKeyboardInterface
             }
 
             Console.ResetColor();
-            await Task.Delay(50);
-            //Thread.Sleep(30);
+            //await Task.Delay(50);
+            Thread.Sleep(30);
             Console.BackgroundColor = ConsoleColor.Black;
             for (var i = sr; i <= er; i++)
             {

@@ -65,12 +65,12 @@ public static class Program
     {
         var thinkpadLayout = new ThinkpadKeyLayout();
         var chars = ThinkpadKeyLayout.KeyLayoutChars;
-        reader.OnKeyPress += async (e) =>
+        reader.OnKeyPress += (e) =>
         {
             if (MenuHandler.CommandMode) return;
             if (e.State == KeyState.KeyUp)
             {
-                await ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
+                ThinkpadKeyLayout.ToggleKeys(chars, thinkpadLayout.FindKeyPositions(e.Code));
             }
         };
     }
