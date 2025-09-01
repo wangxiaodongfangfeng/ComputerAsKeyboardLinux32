@@ -53,7 +53,6 @@ public static class SerialPortExtension
             CurrentSerialPort = AllAvailablePorts.Values.First();
             return;
         }
-
         var index = 0;
         foreach (var port in AllAvailablePorts.Values)
         {

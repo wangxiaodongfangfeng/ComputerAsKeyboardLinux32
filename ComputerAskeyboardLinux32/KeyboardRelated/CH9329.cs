@@ -274,6 +274,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private void CharKeyType(byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
         {
             KeyDown(KeyGroup.CharKey, k0, k1, k2, k3, k4, k5, k6);
+            Thread.Sleep(10);
             KeyUpAll(KeyGroup.CharKey);
         }
 
@@ -285,7 +286,10 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                      where _charKeyTable.ContainsKey(s.ToString())
                      select _charKeyTable[s.ToString()])
             {
-                CharKeyType(dat[0], dat[1]);
+                KeyDown(KeyGroup.CharKey, 0x00, dat[1], dat[0], 0, 0, 0, 0);
+                Thread.Sleep(10);
+                KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0x00, 0, 0, 0, 0);
+                //CharKeyType(0x00, dat[1], dat[0]);
             }
         }
 
