@@ -6,7 +6,7 @@ namespace ComputerAsKeyboardInterface
     {
         public const string KeyboardLayoutString = """
 
-                                                   |--------------------------------------------------------------------------------------------------------------------|
+                                                   |‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|
                                                    | ESC  │  MT  │  V-  │  V+  │   │  TV  │      │      │      │   │  IO  │ PRTSR│SCRLK │PAUSE │   │INSERT│ HOME │ PGUP │
                                                    |      │      │      │      │   │      │      │      │      │   │      │      │      │      │   │      │      │      │
                                                    |----------------------------   -----------------------------   -----------------------------   ----------------------
@@ -371,7 +371,7 @@ namespace ComputerAsKeyboardInterface
             {
                 for (var j = sc; j <= ec; j++)
                 {
-                    Console.SetCursorPosition(j, i);
+                    Console.SetCursorPosition(j - 1, i);
                     Console.Write(chars[i][j - ThinkpadKeyLayout.StartColumn]);
                 }
             }

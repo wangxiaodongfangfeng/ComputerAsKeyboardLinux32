@@ -195,7 +195,7 @@ public static class Program
         File.WriteAllLines(".devices", chosenList);
 
         InputDevices = chosenList.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
-        
+
         return true;
     }
 
@@ -556,7 +556,7 @@ public static class Program
             foreach (var content in Logs.ToList())
             {
                 Console.SetCursorPosition(ThinkpadKeyLayout.StartColumn, 28 + (++index));
-                Console.WriteLine(content);
+                Console.WriteLine(content.PadRight(116));
             }
         }
     }
