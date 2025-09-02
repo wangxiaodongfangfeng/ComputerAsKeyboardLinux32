@@ -26,8 +26,9 @@ public static class Program
     private static bool _bluetooth = false;
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
-
     private static List<string>? InputDevices { get; set; } = [];
+
+    private static int BaudRate { get; set; } = 9600;
 
     private static int ControlBytes
     {
@@ -221,13 +222,14 @@ public static class Program
         {
             parsedArgs = Args.Parse<StartArgs>(args);
             _chosenDevice = parsedArgs.Device;
-            _ttyUsbDirectory = parsedArgs.ScanPath;
+            _ttyUsbDirectory = parsedArgs.ScanPath??"/dev/";
             _mute = !parsedArgs.Verbose;
             _switchAlt = parsedArgs.MacOs;
-            _mouseDevice = parsedArgs.Mouse;
+            _mouseDevice = parsedArgs.Mouse ?? "mouse0";
             _bluetooth = parsedArgs.Bluetooth;
             _fingerPrint = parsedArgs.Fingerprint;
             UseQueue = parsedArgs.Queue;
+            BaudRate = parsedArgs.BaudRate;
         }
         catch (ArgException ex)
         {
@@ -384,7 +386,7 @@ public static class Program
         if (push)
         {
             //push
-            //if we don't have duplicated key,find a new slot
+            //if we don't have a duplicated key,find a new slot
             if (!KeySlots.Contains(keyByte))
             {
                 var index = KeySlots.ToList().FindIndex(key => key == 0);
@@ -563,7 +565,9 @@ public static class Program
 
     private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
     {
-        return bluetooth ? (IKeyboard)new Btk05(port) : (IKeyboard)new Ch9329(port);
+        return bluetooth
+            ? new Btk05(port, baudRate: BaudRate)
+            : new Ch9329(port, baudRate: BaudRate);
     }
 
     /// <summary>

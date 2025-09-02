@@ -9,8 +9,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private ConcurrentBag<InputReader>? _readers = [];
         public event InputReader.RaiseKeyPress? OnKeyPress;
         public event InputReader.RaiseMouseMove? OnMouseMove;
-
-
+    
         public AggregateInputReader(List<string> inputs)
         {
             if (inputs.Count == 0)
