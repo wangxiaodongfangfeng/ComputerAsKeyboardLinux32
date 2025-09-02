@@ -28,6 +28,8 @@ public static class Program
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
 
+    private static List<string> BindingBluetoothDevices { get; set; } = [];
+
     private static int BaudRate { get; set; } = 9600;
 
     private static int ControlBytes
@@ -60,6 +62,13 @@ public static class Program
         if (!File.Exists(".devices")) return;
         var devices = File.ReadAllLines(".devices");
         InputDevices = devices.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
+    }
+
+    private static void LoadBindingBluetoothDevices()
+    {
+        if(!File.Exists(".bluetooth")) return;
+        var  devices = File.ReadAllLines(".bluetooth").ToList();
+        BindingBluetoothDevices = devices.ToList();
     }
 
     private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
@@ -211,7 +220,7 @@ public static class Program
         InitSpecialKeyMap();
         InitPassword();
         LoadDevicesMapping();
-
+        LoadBindingBluetoothDevices();
 
         if (HandleInitCommandsWhenInit(args)) return;
 
@@ -222,7 +231,7 @@ public static class Program
         {
             parsedArgs = Args.Parse<StartArgs>(args);
             _chosenDevice = parsedArgs.Device;
-            _ttyUsbDirectory = parsedArgs.ScanPath??"/dev/";
+            _ttyUsbDirectory = parsedArgs.ScanPath ?? "/dev/";
             _mute = !parsedArgs.Verbose;
             _switchAlt = parsedArgs.MacOs;
             _mouseDevice = parsedArgs.Mouse ?? "mouse0";
