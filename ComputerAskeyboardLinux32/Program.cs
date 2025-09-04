@@ -31,6 +31,9 @@ public static class Program
     private static List<string> BindingBluetoothDevices { get; set; } = [];
 
     private static int BaudRate { get; set; } = 9600;
+    private static bool HasXInput { get; set; } = false;
+
+    private static List<int> ToggleInputDeviceIds { get; set; } = [];
 
     private static int ControlBytes
     {
@@ -62,13 +65,6 @@ public static class Program
         if (!File.Exists(".devices")) return;
         var devices = File.ReadAllLines(".devices");
         InputDevices = devices.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
-    }
-
-    private static void LoadBindingBluetoothDevices()
-    {
-        if(!File.Exists(".bluetooth")) return;
-        var  devices = File.ReadAllLines(".bluetooth").ToList();
-        BindingBluetoothDevices = devices.ToList();
     }
 
     private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
@@ -161,6 +157,23 @@ public static class Program
             if (e.Code != EventCode.Prog1 || e.State != KeyState.KeyUp) return;
             _toggle = !_toggle;
             WriteLogOnScreen($"Toggle is {(_toggle ? "on" : "off")} now");
+
+            if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
+            var command = _toggle ? "disable" : "enable";
+            try
+            {
+                ToggleInputDeviceIds.ForEach(id =>
+                {
+#if DEBUG
+                    WriteLogOnScreen($"ExecuteCommand xinput {command} {id}");
+#endif
+                    LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}");
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         };
     }
 
@@ -222,7 +235,52 @@ public static class Program
         LoadDevicesMapping();
         LoadBindingBluetoothDevices();
 
+
         if (HandleInitCommandsWhenInit(args)) return;
+
+        HasXInput = LinuxCommandChecker.IsCommandExists("xinput");
+
+        if (HasXInput)
+        {
+            const string toggleDevicesFile = ".toggle_devices";
+            var allxInputDevices = DeviceResolver.GetXInputDevices();
+            if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
+            {
+                Console.WriteLine("Please choose the input device you want to toggle:");
+                var inputDevices = new List<string>();
+                var index = 0;
+                allxInputDevices.ForEach(kv =>
+                {
+                    Console.WriteLine($"{index++}. {kv.Name}");
+                    inputDevices.Add(kv.Name);
+                });
+                var line = Console.ReadLine();
+                if (string.IsNullOrEmpty(line)) Console.WriteLine("Invalid input");
+
+                if (line != null && line.Split(',').Any(s => !int.TryParse(s, out _)))
+                    Console.WriteLine("Invalid input");
+
+                var chosenIndexes = line.Split(',').Select(int.Parse).ToList();
+
+                var chosenList = new List<string>();
+
+                chosenIndexes.ForEach(i =>
+                {
+                    if (i < 0 || i >= inputDevices.Count) return;
+                    chosenList.Add(inputDevices[i]);
+                });
+
+                File.WriteAllLines(toggleDevicesFile, chosenList);
+            }
+
+            if (allxInputDevices.Count != 0 && File.Exists(toggleDevicesFile))
+            {
+                var devices = File.ReadAllLines(toggleDevicesFile);
+                var ids = devices.Select(d => { return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1; })
+                    .Where(d => d != -1);
+                ToggleInputDeviceIds = ids.ToList();
+            }
+        }
 
 
         StartArgs parsedArgs;
