@@ -233,7 +233,7 @@ public static class Program
         InitSpecialKeyMap();
         InitPassword();
         LoadDevicesMapping();
-        LoadBindingBluetoothDevices();
+        // LoadBindingBluetoothDevices();
 
 
         if (HandleInitCommandsWhenInit(args)) return;
