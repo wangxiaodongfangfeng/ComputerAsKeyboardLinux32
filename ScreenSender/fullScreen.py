@@ -5,6 +5,9 @@ import socket
 import threading
 import io
 import time
+import argparse
+import signal
+import sys
 
 class ScreenshotClient:
     def __init__(self, root):
@@ -34,7 +37,8 @@ class ScreenshotClient:
         self.root.attributes("-topmost", True)
         self.root.attributes("-alpha", 1.0)  # 不透明
         self.root.overrideredirect(True)     # 无标题栏
-        self.root.protocol("WM_DELETE_WINDOW", self._do_nothing)
+        # Remove or comment out the following line to allow window close
+        # self.root.protocol("WM_DELETE_WINDOW", self._do_nothing)
                 # 获取屏幕尺寸
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -95,7 +99,7 @@ class ScreenshotClient:
             # 显示图片
             self.image_label.config(image=tk_img, text="")
             self.image_label.image = tk_img  # 保持引用
-            print(f"[{time.strftime('%H:%M:%S')}] 图片显示成功 ({img.size[0]}x{img.size[1]})")
+            # print(f"[{time.strftime('%H:%M:%S')}] 图片显示成功 ({img.size[0]}x{img.size[1]})")
 
         except Exception as e:
             error_msg = f"显示错误: {str(e)}"
@@ -115,7 +119,6 @@ class ScreenshotClient:
                     size_data += chunk
                 
                 image_size = int.from_bytes(size_data, byteorder='big')
-                print(f"[{time.strftime('%H:%M:%S')}] 接收图片，大小: {image_size}字节")
                 
                 # 接收图片数据
                 image_data = b""
@@ -132,7 +135,12 @@ class ScreenshotClient:
                 
             except Exception as e:
                 error_msg = f"接收错误: {str(e)}"
-                self.root.after(0, self._show_text, error_msg)
+                # 清除图片并显示错误信息
+                def clear_image_and_show_error():
+                    self.image_label.config(image='', text=error_msg, font=("Arial", 18), foreground="#ffffff")
+                    self.image_label.image = None
+                    self.current_image = None
+                self.root.after(0, clear_image_and_show_error)
                 print(f"[{time.strftime('%H:%M:%S')}] {error_msg}")
                 
                 # 断开连接并重连
@@ -187,6 +195,21 @@ class ScreenshotClient:
         self.connect_thread.start()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Screenshot Client")
+    parser.add_argument("--ip", type=str, default="10.136.67.37", help="Server IP address")
+    parser.add_argument("--port", type=int, default=12345, help="Server port")
+    args = parser.parse_args()
+
     root = tk.Tk()
     app = ScreenshotClient(root)
+    app.server_ip = args.ip
+    app.server_port = args.port
+
+    # Handle Ctrl+C gracefully
+    def signal_handler(sig, frame):
+        print("Exiting...")
+        root.destroy()
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
+
     root.mainloop()
