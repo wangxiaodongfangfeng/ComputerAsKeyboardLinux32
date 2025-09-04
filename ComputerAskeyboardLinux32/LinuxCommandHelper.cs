@@ -69,6 +69,7 @@ public class LinuxCommandHelper
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
+            await Task.Delay(1000);
             // 等待进程完成或超时
             if (await Task.Run(() => process.WaitForExit(timeoutMilliseconds)))
             {

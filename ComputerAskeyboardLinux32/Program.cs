@@ -165,7 +165,7 @@ public static class Program
 #if DEBUG
                     WriteLogOnScreen($"ExecuteCommand xinput {command} {id}");
 #endif
-                    //LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}");
+                    LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}");
                 });
             }
             catch (Exception ex)
