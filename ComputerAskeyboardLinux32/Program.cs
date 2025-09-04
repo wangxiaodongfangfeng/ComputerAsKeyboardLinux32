@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.ComponentModel.Design;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
 using ComputerAsKeyboardInterface.MouseRelated;
@@ -27,8 +28,10 @@ public static class Program
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
-
     private static int BaudRate { get; set; } = 9600;
+    private static bool HasXInput { get; set; } = false;
+
+    private static List<int> ToggleInputDeviceIds { get; set; } = [];
 
     private static int ControlBytes
     {
@@ -152,6 +155,23 @@ public static class Program
             if (e.Code != EventCode.Prog1 || e.State != KeyState.KeyUp) return;
             _toggle = !_toggle;
             WriteLogOnScreen($"Toggle is {(_toggle ? "on" : "off")} now");
+
+            if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
+            var command = _toggle ? "disable" : "enable";
+            try
+            {
+                ToggleInputDeviceIds.ForEach(id =>
+                {
+#if DEBUG
+                    WriteLogOnScreen($"ExecuteCommand xinput {command} {id}");
+#endif
+                    //LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}");
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         };
     }
 
@@ -212,8 +232,51 @@ public static class Program
         InitPassword();
         LoadDevicesMapping();
 
-
         if (HandleInitCommandsWhenInit(args)) return;
+
+        HasXInput = LinuxCommandChecker.IsCommandExists("xinput");
+
+        if (HasXInput)
+        {
+            const string toggleDevicesFile = ".toggle_devices";
+            var allxInputDevices = DeviceResolver.GetXInputDevices();
+            if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
+            {
+                Console.WriteLine("Please choose the input device you want to toggle:");
+                var inputDevices = new List<string>();
+                var index = 0;
+                allxInputDevices.ForEach(kv =>
+                {
+                    Console.WriteLine($"{index++}. {kv.Name}");
+                    inputDevices.Add(kv.Name);
+                });
+                var line = Console.ReadLine();
+                if (string.IsNullOrEmpty(line)) Console.WriteLine("Invalid input");
+
+                if (line != null && line.Split(',').Any(s => !int.TryParse(s, out _)))
+                    Console.WriteLine("Invalid input");
+
+                var chosenIndexes = line.Split(',').Select(int.Parse).ToList();
+
+                var chosenList = new List<string>();
+
+                chosenIndexes.ForEach(i =>
+                {
+                    if (i < 0 || i >= inputDevices.Count) return;
+                    chosenList.Add(inputDevices[i]);
+                });
+
+                File.WriteAllLines(toggleDevicesFile, chosenList);
+            }
+
+            if (allxInputDevices.Count != 0 && File.Exists(toggleDevicesFile))
+            {
+                var devices = File.ReadAllLines(toggleDevicesFile);
+                var ids = devices.Select(d => { return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1; })
+                    .Where(d => d != -1);
+                ToggleInputDeviceIds = ids.ToList();
+            }
+        }
 
 
         StartArgs parsedArgs;
@@ -222,7 +285,7 @@ public static class Program
         {
             parsedArgs = Args.Parse<StartArgs>(args);
             _chosenDevice = parsedArgs.Device;
-            _ttyUsbDirectory = parsedArgs.ScanPath??"/dev/";
+            _ttyUsbDirectory = parsedArgs.ScanPath ?? "/dev/";
             _mute = !parsedArgs.Verbose;
             _switchAlt = parsedArgs.MacOs;
             _mouseDevice = parsedArgs.Mouse ?? "mouse0";

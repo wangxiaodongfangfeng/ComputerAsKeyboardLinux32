@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace ScreenSender
 {
@@ -10,7 +11,7 @@ namespace ScreenSender
     {
         // 配置参数
         private const int ServerPort = 12345; // 监听端口
-        private const int ScreenshotInterval = 200; // 截屏间隔(毫秒)
+        private const int ScreenshotInterval = 100; // 截屏间隔(毫秒)
         private const int BufferSize = 4096; // 传输缓冲区大小
         private static TcpClient? _client; // 客户端连接
         private static NetworkStream? _clientStream; // 客户端网络流
@@ -126,7 +127,6 @@ namespace ScreenSender
                 e.Cancel = true;
                 Environment.Exit(0);
             };
-
             // 启动TCP监听线程
             var listenThread = new Thread(StartListener)
             {
