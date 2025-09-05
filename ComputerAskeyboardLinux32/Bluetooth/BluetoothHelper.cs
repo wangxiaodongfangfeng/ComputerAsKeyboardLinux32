@@ -218,6 +218,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                             FileName = "bluetoothctl",
                             Arguments = $"scan on",
                             RedirectStandardOutput = true,
+                            RedirectStandardError = true,
                             UseShellExecute = false,
                             CreateNoWindow = true
                         }
