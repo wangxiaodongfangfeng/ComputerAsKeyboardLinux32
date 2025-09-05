@@ -168,7 +168,6 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     try
                     {
                         var rfStatus = rfCommStatus.FirstOrDefault(r => r.Contains(m));
-                        LogInfo($"{rfStatus}");
                         if (rfStatus != null)
                         {
                             if (!rfStatus.Contains("closed")) continue;
@@ -243,7 +242,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
         {
             for (var i = 0; i < 30; i++)
             {
-                if (!File.Exists("/dev/rfcomm{i}")) return i;
+                if (!File.Exists($"/dev/rfcomm{i}")) return i;
             }
 
             return -1;
