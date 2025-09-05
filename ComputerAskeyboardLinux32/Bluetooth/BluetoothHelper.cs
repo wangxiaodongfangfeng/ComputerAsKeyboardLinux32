@@ -145,7 +145,6 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
                 process.Start();
                 var output = process.StandardOutput.ReadToEnd();
-                LogInfo($"Get rfcomm -a out Content:{output}");
                 process.WaitForExit();
 
                 return output.Split(['\r', '\n']).ToList();
@@ -157,15 +156,14 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             }
         }
 
-        public void EnableBluetoothAutoConnect(string[] macAddresses)
+        public async Task EnableBluetoothAutoConnect(string[] macAddresses)
         {
-            var timer = new Timer(async void (o) =>
+            while (true)
             {
                 LogInfo("Starting New Around Bluetooth Auto Connect");
-
                 var rfCommStatus = GetRfcommStatus();
 
-                macAddresses.ForEach(async void (m) =>
+                foreach (var m in macAddresses)
                 {
                     try
                     {
@@ -194,8 +192,10 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     {
                         Console.WriteLine("connect bluetooth failed");
                     }
-                });
-            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(20));
+            }
         }
 
         [GeneratedRegex("(?<name>rfcomm\\d+):", RegexOptions.Multiline)]
