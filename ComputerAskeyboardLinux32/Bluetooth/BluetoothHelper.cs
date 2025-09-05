@@ -171,12 +171,12 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                         LogInfo($"{rfStatus}");
                         if (rfStatus != null)
                         {
-                            if (!rfStatus.Contains("closed")) return;
+                            if (!rfStatus.Contains("closed")) continue;
                             var matches = RfcommReg().Matches(rfStatus);
                             if (matches.Count <= 0) return;
                             var comName = matches.First().Groups["name"];
                             LogInfo($"closed com name {comName}");
-                            if (!File.Exists($"/dev/{comName}")) return;
+                            if (!File.Exists($"/dev/{comName}")) continue;
                             var serialPort = SerialPortExtension.GetSerialPort($"/dev/{comName}");
                             serialPort?.Close();
                             serialPort?.Dispose();
