@@ -14,15 +14,24 @@ public static class SerialPortExtension
     {
         while (true)
         {
-            await Task.Delay(5000);
+            await Task.Delay(2000);
             var files = Directory.GetFiles("/dev");
             files.ForEach(f =>
             {
-                if (!(f.Contains("ttyUSB") || f.Contains("rfcomm"))) return;
+                if (!(f.Contains("ttyUSB") || !f.Contains("rfcomm"))) return;
                 if (AllAvailablePorts.ContainsKey(f)) return;
                 Console.WriteLine($"serialport added {f}");
                 AddSerialPort(f);
             });
+            var needRemoved = new List<string>();
+            AllAvailablePorts.ForEach(p =>
+            {
+                if (!File.Exists(p.Key))
+                {
+                    needRemoved.Add(p.Key);
+                }
+            });
+            needRemoved.ForEach(RemoveSerialPort);
             //await Task.Delay(5000);
         }
     }
