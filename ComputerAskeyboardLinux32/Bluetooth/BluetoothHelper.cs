@@ -163,6 +163,8 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 LogInfo("Starting New Around Bluetooth Auto Connect");
                 var rfCommStatus = GetRfcommStatus();
 
+                var ports = FindAvailableRfComPorts(macAddresses.Length);
+                var index = 0;
                 foreach (var m in macAddresses)
                 {
                     try
@@ -185,7 +187,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                         }
 
                         if (IsDeviceOnline(m))
-                            _ = BluetoothManager2.ConnectRfcommPort(m, FindAvailableRfComPort());
+                            _ = BluetoothManager2.ConnectRfcommPort(m, ports[index++]);
                     }
                     catch (Exception e)
                     {
@@ -254,7 +256,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             var tokens = 0;
             for (var i = 0; i < 30; i++)
             {
-                if (File.Exists("/dev/rfcomm{i}")) continue;
+                if (File.Exists($"/dev/rfcomm{i}")) continue;
                 result.Add(i);
                 tokens++;
                 if (tokens == demands) break;
