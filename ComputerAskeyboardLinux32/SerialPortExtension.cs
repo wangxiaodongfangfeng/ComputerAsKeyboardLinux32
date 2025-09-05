@@ -18,7 +18,7 @@ public static class SerialPortExtension
             var files = Directory.GetFiles("/dev");
             files.ForEach(f =>
             {
-                if (!(f.Contains("ttyUSB") || !f.Contains("rfcomm"))) return;
+                if (!(f.Contains("ttyUSB") || f.Contains("rfcomm"))) return;
                 if (AllAvailablePorts.ContainsKey(f)) return;
                 Console.WriteLine($"serialport added {f}");
                 AddSerialPort(f);
