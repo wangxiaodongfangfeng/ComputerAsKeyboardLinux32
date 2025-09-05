@@ -3,7 +3,7 @@ using System.Text;
 
 namespace ComputerAsKeyboardInterface;
 
-public class LinuxCommandHelper
+public static class LinuxCommandHelper
 {
     /// <summary>
     /// 执行Linux命令并返回结果
@@ -13,8 +13,8 @@ public class LinuxCommandHelper
     /// <param name="timeoutMilliseconds">超时时间（毫秒），默认30000毫秒</param>
     /// <returns>包含执行结果的CommandResult对象</returns>
     private static async Task<CommandResult> ExecuteCommandAsync(
-        string command, 
-        string? workingDirectory = null, 
+        string command,
+        string? workingDirectory = null,
         int timeoutMilliseconds = 30000)
     {
         if (string.IsNullOrEmpty(command))
@@ -34,7 +34,7 @@ public class LinuxCommandHelper
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.CreateNoWindow = true;
-                
+
             // 设置工作目录
             if (!string.IsNullOrEmpty(workingDirectory))
             {
@@ -99,6 +99,88 @@ public class LinuxCommandHelper
     }
 
     /// <summary>
+    /// 执行Linux命令并返回结果
+    /// </summary>
+    /// <param name="command">要执行的命令</param>
+    /// <param name="workingDirectory">工作目录，默认为当前目录</param>
+    /// <param name="onOutputReceived"></param>
+    /// <param name="onErrorReceived"></param>
+    /// <returns>包含执行结果的CommandResult对象</returns>
+    public static async Task<CommandResult> ExecuteCommandInBackgroundAsync(
+        string command,
+        string? workingDirectory = null,
+        Action<string>? onOutputReceived = null,
+        Action<string>? onErrorReceived = null)
+    {
+        if (string.IsNullOrEmpty(command))
+        {
+            throw new ArgumentException("命令不能为空", nameof(command));
+        }
+
+        var result = new CommandResult();
+
+        using var process = new Process();
+        try
+        {
+            // 配置进程信息
+            process.StartInfo.FileName = "/bin/bash";
+            process.StartInfo.Arguments = $"-c \"{EscapeCommand(command)}\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.CreateNoWindow = true;
+
+            // 设置工作目录
+            if (!string.IsNullOrEmpty(workingDirectory))
+            {
+                process.StartInfo.WorkingDirectory = workingDirectory;
+            }
+
+            // 用于存储输出的StringBuilder
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            // 异步处理输出
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data)) return;
+                outputBuilder.AppendLine(e.Data);
+                onOutputReceived?.Invoke(e.Data);
+            };
+
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data)) return;
+                errorBuilder.AppendLine(e.Data);
+                onErrorReceived?.Invoke(e.Data);
+            };
+
+            // 启动进程
+            process.Start();
+
+            // 开始异步读取输出
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            await Task.Delay(1000);
+
+            await process.WaitForExitAsync();
+            result.ExitCode = process.ExitCode;
+            result.Output = outputBuilder.ToString().TrimEnd();
+            result.Error = errorBuilder.ToString().TrimEnd();
+            result.Success = process.ExitCode == 0;
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Error = $"执行命令时发生错误: {ex.Message}";
+            result.ExitCode = -2;
+        }
+
+        return result;
+    }
+
+
+    /// <summary>
     /// 同步执行Linux命令并返回结果
     /// </summary>
     /// <param name="command">要执行的命令</param>
@@ -106,8 +188,8 @@ public class LinuxCommandHelper
     /// <param name="timeoutMilliseconds">超时时间（毫秒），默认30000毫秒</param>
     /// <returns>包含执行结果的CommandResult对象</returns>
     public static CommandResult ExecuteCommand(
-        string command, 
-        string? workingDirectory = null, 
+        string command,
+        string? workingDirectory = null,
         int timeoutMilliseconds = 30000)
     {
         return ExecuteCommandAsync(command, workingDirectory, timeoutMilliseconds).GetAwaiter().GetResult();
@@ -122,6 +204,7 @@ public class LinuxCommandHelper
         return command.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 }
+
 /// <summary>
 /// 命令执行结果
 /// </summary>
@@ -152,6 +235,7 @@ public class CommandResult
         return $"Success: {Success}, ExitCode: {ExitCode}, Output: {Output}, Error: {Error}";
     }
 }
+
 public class LinuxCommandChecker
 {
     // 判断命令是否存在

@@ -2,7 +2,7 @@
 
 namespace ComputerAsKeyboardInterface.Bluetooth
 {
-    public class BluetoothManager2
+    internal class BluetoothManager2
     {
         // 新增：释放所有RFCOMM端口
         public void ReleaseRfcommPorts()
@@ -10,7 +10,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             try
             {
                 Console.WriteLine("释放所有RFCOMM端口...");
-                
+
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -26,7 +26,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
                 process.Start();
                 process.WaitForExit();
-                
+
                 if (process.ExitCode == 0)
                 {
                     Console.WriteLine("RFCOMM端口已成功释放");
@@ -52,7 +52,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "rfcomm",
-                        Arguments = "show",
+                        Arguments = "-a",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -97,7 +97,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 }
 
                 Console.WriteLine($"绑定RFCOMM端口 {port} 到设备 {macAddress}...");
-                
+
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -113,7 +113,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
                 process.Start();
                 await process.WaitForExitAsync();
-                
+
                 var success = process.ExitCode == 0;
                 Console.WriteLine(success ? $"成功将RFCOMM端口 {port} 绑定到设备 {macAddress}" : $"绑定RFCOMM端口 {port} 失败");
                 return success;
@@ -124,6 +124,37 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 return false;
             }
         }
+
+
+        public static async Task<bool> ConnectRfcommPort(string macAddress, int port)
+        {
+            var result =
+                await LinuxCommandHelper
+                    .ExecuteCommandInBackgroundAsync($"rfcomm connect {port} {macAddress}",
+                        onOutputReceived: (output) =>
+                        {
+                            // disconnected
+                            if (!output.Contains("Disconnected")) return;
+                            var portPath = $"/dev/rfcomm{port}";
+                            RemoveSerialPort(portPath);
+                        }
+                    );
+            RemoveSerialPort($"/dev/rfcomm{port}");
+            // disconnected
+            return true;
+
+            void RemoveSerialPort(string portPath)
+            {
+                var serialPort = SerialPortExtension.GetSerialPort(portPath);
+                if (serialPort is not { IsOpen: true }) return;
+                SerialPortExtension.RemoveSerialPort(portPath);
+                serialPort.Close();
+                serialPort.Dispose();
+                Task.Delay(1000).Wait(TimeSpan.FromSeconds(1));
+                if (File.Exists(portPath)) File.Delete(portPath);
+            }
+        }
+
 
         // // 改进的连接方法，添加RFCOMM端口处理
         // public static (bool Success, string ErrorMessage, string RfcommPort) ConnectDeviceWithRfcomm(string macAddress)

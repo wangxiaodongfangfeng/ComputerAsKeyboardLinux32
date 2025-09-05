@@ -44,5 +44,9 @@ namespace ComputerAsKeyboardInterface
         [ArgDescription("specify baudRate of the chip")]
         [DefaultValue(9600)]
         public int BaudRate { get; set; }
+
+        [ArgDescription("if use bluetooth serial port")]
+        [DefaultValue(false)]
+        public bool BluetoothPort { get; set; }
     }
 }

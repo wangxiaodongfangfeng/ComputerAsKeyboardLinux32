@@ -63,12 +63,12 @@ namespace ComputerAsKeyboardInterface.Bluetooth
     // 蓝牙管理器类
     public class BluetoothManager
     {
-        private List<string> OnLineDevices { get; } = [];
+        public List<string> OnLineDevices { get; } = [];
 
         private List<BluetoothDevice> PairedBluetoothDevices { get; } = [];
 
         // 获取所有已配对的蓝牙设备
-        public List<BluetoothDevice> GetPairedDevices()
+        public static List<BluetoothDevice> GetPairedDevices()
         {
             var devices = new List<BluetoothDevice>();
 
@@ -145,7 +145,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 {
                     Console.WriteLine($"Start bluetooth scan failed");
                 }
-            }, null, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(60));
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
         }
 
 

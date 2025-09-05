@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
 using ComputerAsKeyboardInterface.MouseRelated;
@@ -303,6 +304,26 @@ public static class Program
             WriteLogOnScreen(ex.Message);
             return;
         }
+
+        if (parsedArgs.BluetoothPort)
+        {
+            var bluetoothManager = new BluetoothManager();
+            var pairedDevices = BluetoothManager.GetPairedDevices();
+            bluetoothManager.EnableBluetoothAutoDetect();
+            Console.WriteLine("Bluetooth auto detect opened, waiting for 30s for scan");
+            Task.Delay(TimeSpan.FromSeconds(25)).Wait(TimeSpan.FromSeconds(30));
+            Console.WriteLine("First round bluetooth scan finished");
+            var devices = bluetoothManager.OnLineDevices;
+
+            var index = 0;
+
+            pairedDevices.ForEach(p =>
+            {
+                var b = devices.Any(d => p.MacAddress != null && d.Contains(p.MacAddress));
+                if (p.MacAddress != null) _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
+            });
+        }
+
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();
 
