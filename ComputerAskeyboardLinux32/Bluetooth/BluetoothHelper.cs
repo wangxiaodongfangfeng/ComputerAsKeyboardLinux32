@@ -187,7 +187,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                             await Task.Delay(200);
                         }
 
-                        if (OnLineDevices.Any(o => o.Contains(m)))
+                        if (IsDeviceOnline(m))
                             _ = BluetoothManager2.ConnectRfcommPort(m, FindAvailableRfComPort());
                     }
                     catch (Exception e)
@@ -201,7 +201,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
         [GeneratedRegex("(?<name>rfcomm\\d+):", RegexOptions.Multiline)]
         private static partial Regex RfcommReg();
 
-        public void EnableBluetoothAutoDetect()
+        public void EnableBluetoothAutoDetect(string[] macAddresses)
         {
             OnLineDevices.Clear();
 
@@ -233,9 +233,10 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
 
         // 检查设备是否在线
-        public bool IsDeviceOnline(string macAddress)
+        public static bool IsDeviceOnline(string macAddress)
         {
-            return OnLineDevices.Any(o => o.Contains(macAddress));
+            var content = LinuxCommandHelper.ExecuteCommand($"bluetoothctl info {macAddress}");
+            return !string.IsNullOrEmpty(content.Output) && content.Output.Contains("RSSI");
         }
 
         public static int FindAvailableRfComPort()

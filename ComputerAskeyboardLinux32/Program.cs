@@ -310,18 +310,21 @@ public static class Program
         {
             var bluetoothManager = new BluetoothManager();
             var pairedDevices = BluetoothManager.GetPairedDevices();
-            bluetoothManager.EnableBluetoothAutoDetect();
+            // bluetoothManager.EnableBluetoothAutoDetect(pairedDevices
+            //     .Where(p => p.MacAddress != null)
+            //     .Select(p => p.MacAddress!)
+            //     .ToArray());
             Console.WriteLine("Bluetooth auto detect opened, waiting for 30s for scan");
             Task.Delay(TimeSpan.FromSeconds(25)).Wait(TimeSpan.FromSeconds(30));
             Console.WriteLine("First round bluetooth scan finished");
             var devices = bluetoothManager.OnLineDevices;
             BluetoothManager.LogInfo($"{devices.Count} devices found");
-            var index = 0;
             BluetoothManager.LogInfo($"Start to connect:");
             pairedDevices.ForEach(p =>
             {
-                var b = devices.Any(d => p.MacAddress != null && d.Contains(p.MacAddress));
-                if (p.MacAddress != null) _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
+                var b = BluetoothManager.IsDeviceOnline(p.MacAddress!);
+                if (p.MacAddress != null && b)
+                    _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, BluetoothManager.FindAvailableRfComPort());
             });
             Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
             Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
