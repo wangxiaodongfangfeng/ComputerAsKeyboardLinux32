@@ -126,7 +126,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
         }
 
         // 新增：检查特定RFCOMM端口是否被占用
-        private static List<string> GetRfcommStatus()
+        public static List<string> GetRfcommStatus()
         {
             try
             {
@@ -176,13 +176,9 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                             if (matches.Count <= 0) return;
                             var comName = matches.First().Groups["name"];
                             LogInfo($"closed com name {comName}");
-                            if (!File.Exists($"/dev/{comName}")) continue;
                             var serialPort = SerialPortExtension.GetSerialPort($"/dev/{comName}");
                             serialPort?.Close();
                             serialPort?.Dispose();
-                            await Task.Delay(200);
-                            File.Delete($"/dev/{comName}");
-                            await Task.Delay(200);
                         }
 
                         if (IsDeviceOnline(m))
@@ -194,7 +190,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     }
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(20));
+                await Task.Delay(TimeSpan.FromSeconds(60));
             }
         }
 
