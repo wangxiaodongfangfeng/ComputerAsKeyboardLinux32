@@ -43,6 +43,11 @@ public static class SerialPortExtension
                         {
                             needRemoved.Add(p.Key);
                         }
+
+                        if (status.Any(s => s.Contains(filename) && s.Contains("closed")))
+                        {
+                            needRemoved.Add(p.Key);
+                        }
                     });
             }
 
