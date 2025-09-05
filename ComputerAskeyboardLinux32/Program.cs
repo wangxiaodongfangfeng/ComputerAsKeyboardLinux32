@@ -313,7 +313,7 @@ public static class Program
             var index = 0;
             pairedDevices.ForEach(p =>
             {
-                var b =BluetoothManager.IsDeviceOnline(p.MacAddress!);
+                var b = BluetoothManager.IsDeviceOnline(p.MacAddress!);
                 if (p.MacAddress != null && b)
                     _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
             });
@@ -324,6 +324,7 @@ public static class Program
                 .Where(p => p.MacAddress != null)
                 .Select(p => p.MacAddress!)
                 .ToArray());
+            _ = SerialPortExtension.EnableAutoDetectAsync();
         }
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();

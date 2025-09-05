@@ -1,4 +1,5 @@
 ﻿using System.IO.Ports;
+using PowerArgs;
 
 namespace ComputerAsKeyboardInterface;
 
@@ -7,6 +8,22 @@ public static class SerialPortExtension
     private static Dictionary<string, SerialPort> AllAvailablePorts { get; set; } = new();
 
     public static SerialPort? CurrentSerialPort { get; set; }
+
+
+    public static async Task EnableAutoDetectAsync()
+    {
+        while (true)
+        {
+            var files = Directory.GetFiles("/dev");
+            files.ForEach(f =>
+            {
+                if (!(f.Contains("ttyUSB") || f.Contains("rfcomm"))) return;
+                if (AllAvailablePorts.ContainsKey(f)) return;
+                AddSerialPort(f);
+            });
+            await Task.Delay(5000);
+        }
+    }
 
 
     public static SerialPort? GetSerialPort(string portName)
@@ -53,6 +70,7 @@ public static class SerialPortExtension
             CurrentSerialPort = AllAvailablePorts.Values.First();
             return;
         }
+
         var index = 0;
         foreach (var port in AllAvailablePorts.Values)
         {
