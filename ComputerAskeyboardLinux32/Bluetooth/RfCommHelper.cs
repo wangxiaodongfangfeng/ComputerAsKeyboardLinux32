@@ -41,7 +41,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 Console.WriteLine($"释放RFCOMM端口时出错: {ex.Message}");
             }
         }
-        
+
         // 新增：检查特定RFCOMM端口是否被占用
         private static bool IsRfcommPortInUse(int port)
         {
@@ -128,23 +128,29 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
         public static async Task<bool> ConnectRfcommPort(string macAddress, int port)
         {
+            BluetoothManager.LogInfo($"Starting to connect {macAddress} to rfcomm{port}");
             var result =
                 await LinuxCommandHelper
                     .ExecuteCommandInBackgroundAsync($"rfcomm connect {port} {macAddress}",
                         onOutputReceived: (output) =>
                         {
+                            if (output.Contains("Disconnected"))
+                                BluetoothManager.LogInfo("Disconnected recieve from rfcomm");
                             // disconnected
                             if (!output.Contains("Disconnected")) return;
                             var portPath = $"/dev/rfcomm{port}";
                             RemoveSerialPort(portPath);
                         }
                     );
+            BluetoothManager.LogInfo($"Connected to rfcomm{port} task ending, means disconnected?");
             RemoveSerialPort($"/dev/rfcomm{port}");
             // disconnected
             return true;
 
             void RemoveSerialPort(string portPath)
             {
+                BluetoothManager.LogInfo("Start to remove serial port");
+
                 var serialPort = SerialPortExtension.GetSerialPort(portPath);
                 if (serialPort is not { IsOpen: true }) return;
                 SerialPortExtension.RemoveSerialPort(portPath);
@@ -152,6 +158,8 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 serialPort.Dispose();
                 Task.Delay(1000).Wait(TimeSpan.FromSeconds(1));
                 if (File.Exists(portPath)) File.Delete(portPath);
+                BluetoothManager.LogInfo($"SerialPort Exist status {File.Exists(portPath)}");
+                BluetoothManager.LogInfo("Stop to remove serial port");
             }
         }
 

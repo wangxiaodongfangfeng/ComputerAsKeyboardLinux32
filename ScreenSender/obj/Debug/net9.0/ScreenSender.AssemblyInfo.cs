@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ScreenSender")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c880977892a869ba8ae56f3c493886d09287eb24")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+49ce9c7a9270de7fc047e73916223eb27610523e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ScreenSender")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ScreenSender")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

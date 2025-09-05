@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿#define TESTBLUETOOTH
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Text.RegularExpressions;
 using PowerArgs;
@@ -70,9 +71,18 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
         private List<BluetoothDevice> PairedBluetoothDevices { get; } = [];
 
+
+        public static void LogInfo(string logContent)
+        {
+#if TESTBLUETOOTH
+            Console.WriteLine(logContent);
+#endif
+        }
+
         // 获取所有已配对的蓝牙设备
         public static List<BluetoothDevice> GetPairedDevices()
         {
+            LogInfo("Starting Get Paired Bluetooth devices");
             var devices = new List<BluetoothDevice>();
 
             try
@@ -90,7 +100,9 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 };
 
                 process.Start();
+                LogInfo("Start bluetooth paired devices successfully");
                 var output = process.StandardOutput.ReadToEnd();
+                LogInfo($"GetContent:{output}");
                 process.WaitForExit();
 
                 var lines = output.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
@@ -101,6 +113,9 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     into parts
                     where parts.Length >= 3
                     select new BluetoothDevice { MacAddress = parts[1], Name = string.Join(" ", parts.Skip(2)) });
+#if TESTBLUETOOTH
+                LogInfo($"GetDevices{devices.Count}:{string.Join(",", devices.Select(d => d.Name))}");
+#endif
             }
             catch (Exception ex)
             {
@@ -129,7 +144,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
                 process.Start();
                 var output = process.StandardOutput.ReadToEnd();
-
+                LogInfo($"Get rfcomm -a out Content:{output}");
                 process.WaitForExit();
 
                 return output.Split(['\r', '\n']).ToList();
@@ -145,6 +160,8 @@ namespace ComputerAsKeyboardInterface.Bluetooth
         {
             var timer = new Timer(async void (o) =>
             {
+                LogInfo("Starting New Around Bluetooth Auto Connect");
+
                 var rfCommStatus = GetRfcommStatus();
 
                 macAddresses.ForEach(async void (m) =>
@@ -152,12 +169,14 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     try
                     {
                         var rfStatus = rfCommStatus.FirstOrDefault(r => r.Contains(m));
+                        LogInfo($"{rfStatus}");
                         if (rfStatus != null)
                         {
                             if (!rfStatus.Contains("closed")) return;
                             var matches = RfcommReg().Matches(rfStatus);
                             if (matches.Count <= 0) return;
                             var comName = matches.First().Groups["name"];
+                            LogInfo($"closed com name {comName}");
                             if (!File.Exists($"/dev/{comName}")) return;
                             var serialPort = SerialPortExtension.GetSerialPort($"/dev/{comName}");
                             serialPort?.Close();
@@ -189,6 +208,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             {
                 try
                 {
+                    LogInfo("New round of  Auto Detect Bluetooth Start:");
                     OnLineDevices.Clear();
                     var process = new Process
                     {
@@ -203,17 +223,21 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     };
 
                     process.Start();
-
+                    LogInfo("Start bluetooth scan on successfully");
                     var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                     await Task.Run(async () =>
                     {
                         while (!cts.IsCancellationRequested)
                         {
                             var availableDevice = await process.StandardOutput.ReadLineAsync(cts.Token);
+                            LogInfo($"Read new line of device :{availableDevice}");
                             if (availableDevice != null) OnLineDevices.Add(availableDevice);
-                            await Task.Delay(300, cts.Token);
+                            await Task.Delay(30, cts.Token);
                         }
                     }, cts.Token);
+
+                    LogInfo(
+                        $"this round of scan is terminated, all devices:{OnLineDevices.Count} {string.Join('\n', OnLineDevices.ToArray())}");
                 }
                 catch (Exception ex)
                 {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿#define TESTBLUETOOTH
+using System.Collections.Concurrent;
 using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
@@ -314,9 +315,9 @@ public static class Program
             Task.Delay(TimeSpan.FromSeconds(25)).Wait(TimeSpan.FromSeconds(30));
             Console.WriteLine("First round bluetooth scan finished");
             var devices = bluetoothManager.OnLineDevices;
-
+            BluetoothManager.LogInfo($"{devices.Count} devices found");
             var index = 0;
-
+            BluetoothManager.LogInfo($"Start to connect:");
             pairedDevices.ForEach(p =>
             {
                 var b = devices.Any(d => p.MacAddress != null && d.Contains(p.MacAddress));
@@ -330,6 +331,9 @@ public static class Program
                 .Select(p => p.MacAddress!)
                 .ToArray());
         }
+#if TESTBLUETOOTH
+        return;
+#endif
 
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();
