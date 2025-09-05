@@ -58,12 +58,12 @@ def is_connected(mac):
     try:
         # 使用rfcomm -a检查连接状态
         rfcomm_output = subprocess.check_output(
-            ["rfcomm", "-a"],
+            ["sudo", "rfcomm", "-a"],  # 添加sudo确保权限
             stderr=subprocess.STDOUT,
             text=True
         )
 
-        if mac in rfcomm_output and "connected" in rfcomm_output:
+        if mac in rfcomm_output and "CONNECTED" in rfcomm_output:
             return True
 
         # 检查蓝牙连接状态
@@ -74,7 +74,8 @@ def is_connected(mac):
         )
 
         return "Connected: yes" in btctl_output
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        log(f"检查连接状态出错: {e.output}")
         return False
 
 # 检查设备是否在范围内（可连接）
@@ -97,7 +98,7 @@ def is_in_range(mac):
 def find_available_rfcomm_port():
     try:
         output = subprocess.check_output(
-            ["rfcomm", "-a"],
+            ["sudo", "rfcomm", "-a"],  # 添加sudo确保权限
             stderr=subprocess.STDOUT,
             text=True
         )
@@ -109,7 +110,7 @@ def find_available_rfcomm_port():
             match = pattern.search(line)
             if match:
                 # 检查端口是否处于连接状态
-                if "connected" in line:
+                if "CONNECTED" in line:
                     used_ports.append(int(match.group(1)))
 
         # 从起始端口开始查找第一个可用端口
@@ -139,18 +140,17 @@ def connect_device(mac, name):
     retries = 0
     while retries < MAX_RETRIES:
         try:
-
-            # 使用rfcomm connect命令连接到指定端口
-            # 注意：rfcomm connect会阻塞，所以我们需要在后台运行
-            process = subprocess.Popen(
-                ["rfcomm", "connect", str(port), mac, "&"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True  # 需要shell=True来支持后台运行符号&
+            # 使用带sudo的rfcomm connect命令，并确保在后台运行
+            # 改进了后台运行的处理方式，避免进程残留
+            cmd = f"sudo rfcomm connect {port} {mac} > /dev/null 2>&1 &"
+            subprocess.run(
+                cmd,
+                shell=True,
+                check=True
             )
 
             # 等待连接建立
-            time.sleep(3)
+            time.sleep(5)  # 延长等待时间，确保连接完成
 
             # 检查是否连接成功
             if is_connected(mac):
@@ -158,9 +158,13 @@ def connect_device(mac, name):
                 return True
             else:
                 log(f"连接rfcomm{port}未成功建立")
+                # 清理可能的残留进程
+                subprocess.run(f"sudo pkill -f 'rfcomm connect {port} {mac}'", shell=True)
 
         except subprocess.CalledProcessError as e:
             log(f"连接尝试 {retries + 1} 失败: {str(e)}")
+        except subprocess.TimeoutExpired:
+            log(f"连接尝试 {retries + 1} 超时")
 
         retries += 1
         if retries < MAX_RETRIES:
@@ -172,6 +176,8 @@ def connect_device(mac, name):
 # 处理程序退出
 def handle_exit(signal, frame):
     log("脚本正在退出...")
+    # 清理所有rfcomm连接
+    subprocess.run(["sudo", "rfcomm", "release", "all"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sys.exit(0)
 
 # 主循环
@@ -200,8 +206,10 @@ def main():
 
     except Exception as e:
         log(f"脚本出错: {str(e)}")
+        # 出错时清理连接
+        subprocess.run(["sudo", "rfcomm", "release", "all"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         raise
 
 if __name__ == "__main__":
     main()
-    
+       
