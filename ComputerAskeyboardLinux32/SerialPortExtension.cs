@@ -1,4 +1,5 @@
 ﻿using System.IO.Ports;
+using ComputerAsKeyboardInterface.Bluetooth;
 using PowerArgs;
 
 namespace ComputerAsKeyboardInterface;
@@ -10,7 +11,7 @@ public static class SerialPortExtension
     public static SerialPort? CurrentSerialPort { get; set; }
 
 
-    public static async Task EnableAutoDetectAsync()
+    public static async Task EnableAutoDetectAsync(bool bluetoothPort)
     {
         while (true)
         {
@@ -31,6 +32,20 @@ public static class SerialPortExtension
                     needRemoved.Add(p.Key);
                 }
             });
+            if (bluetoothPort)
+            {
+                var status = BluetoothManager.GetRfcommStatus();
+                AllAvailablePorts.Where(p => p.Key.Contains("rfcomm"))
+                    .ForEach(p =>
+                    {
+                        var filename = Path.GetFileName(p.Key);
+                        if (!status.Any(s => s.Contains(filename)))
+                        {
+                            needRemoved.Add(p.Key);
+                        }
+                    });
+            }
+
             needRemoved.ForEach(RemoveSerialPort);
             //await Task.Delay(5000);
         }
@@ -65,6 +80,8 @@ public static class SerialPortExtension
         {
             CurrentSerialPort = AllAvailablePorts.Count > 0 ? AllAvailablePorts.Values.First() : null;
         }
+        port?.Close();
+        port?.Dispose();
     }
 
     public static void SwitchSerialPort(int index)

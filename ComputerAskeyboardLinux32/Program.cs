@@ -361,7 +361,7 @@ public static class Program
         // {
         // }
 
-        _ = SerialPortExtension.EnableAutoDetectAsync();
+        _ = SerialPortExtension.EnableAutoDetectAsync(parsedArgs.BluetoothPort);
         while (true)
         {
             Console.ReadKey(intercept: true);
