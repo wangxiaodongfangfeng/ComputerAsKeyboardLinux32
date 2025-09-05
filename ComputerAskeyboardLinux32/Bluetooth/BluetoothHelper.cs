@@ -211,45 +211,15 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 {
                     LogInfo("New round of  Auto Detect Bluetooth Start:");
                     OnLineDevices.Clear();
-                    var process = new Process
+
+                    var result = await LinuxCommandHelper.ExecuteCommandAsync("bluetoothctl scan on");
+
+                    if (!string.IsNullOrEmpty(result.Output))
                     {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = "bluetoothctl",
-                            Arguments = $"scan on",
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        }
-                    };
+                        result.Output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                            .ForEach(r => OnLineDevices.Add(r));
+                    }
 
-                    var outputBuilder = new StringBuilder();
-                    var errorBuilder = new StringBuilder();
-
-                    // 异步处理输出
-                    process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (string.IsNullOrEmpty(e.Data)) return;
-                        outputBuilder.AppendLine(e.Data);
-                        OnLineDevices.Add(e.Data);
-                    };
-
-                    process.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (string.IsNullOrEmpty(e.Data)) return;
-                        errorBuilder.AppendLine(e.Data);
-                    };
-
-                    // 启动进程
-                    process.Start();
-
-                    // 开始异步读取输出
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    await Task.Delay(1000);
-
-                    await Task.Run(() => { process.WaitForExit(TimeSpan.FromSeconds(30)); });
 
                     LogInfo(
                         $"this round of scan is terminated, all devices:{OnLineDevices.Count} {string.Join('\n', OnLineDevices.ToArray())}");

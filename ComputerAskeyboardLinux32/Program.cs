@@ -332,6 +332,7 @@ public static class Program
                 .ToArray());
         }
 #if TESTBLUETOOTH
+        Console.ReadLine();
         return;
 #endif
 

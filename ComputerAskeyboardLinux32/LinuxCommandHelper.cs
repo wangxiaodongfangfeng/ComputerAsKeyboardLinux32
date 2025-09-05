@@ -12,7 +12,7 @@ public static class LinuxCommandHelper
     /// <param name="workingDirectory">工作目录，默认为当前目录</param>
     /// <param name="timeoutMilliseconds">超时时间（毫秒），默认30000毫秒</param>
     /// <returns>包含执行结果的CommandResult对象</returns>
-    private static async Task<CommandResult> ExecuteCommandAsync(
+    public static async Task<CommandResult> ExecuteCommandAsync(
         string command,
         string? workingDirectory = null,
         int timeoutMilliseconds = 30000)
@@ -81,6 +81,7 @@ public static class LinuxCommandHelper
             }
             else
             {
+                result.Output = outputBuilder.ToString().TrimEnd();
                 // 超时，终止进程
                 process.Kill();
                 result.Success = false;
