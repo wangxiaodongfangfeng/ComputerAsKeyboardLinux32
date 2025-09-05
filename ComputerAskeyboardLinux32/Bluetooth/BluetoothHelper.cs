@@ -1,6 +1,7 @@
 ﻿#define TESTBLUETOOTH
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Text;
 using System.Text.RegularExpressions;
 using PowerArgs;
 using Object = Atk.Object;
@@ -223,18 +224,32 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                     };
 
                     process.Start();
-                    LogInfo("Start bluetooth scan on successfully");
-                    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    await Task.Run(async () =>
+                    var outputBuilder = new StringBuilder();
+                    var errorBuilder = new StringBuilder();
+
+                    // 异步处理输出
+                    process.OutputDataReceived += (sender, e) =>
                     {
-                        while (!cts.IsCancellationRequested)
-                        {
-                            var availableDevice = await process.StandardOutput.ReadLineAsync(cts.Token);
-                            LogInfo($"Read new line of device :{availableDevice}");
-                            if (availableDevice != null) OnLineDevices.Add(availableDevice);
-                            await Task.Delay(30, cts.Token);
-                        }
-                    }, cts.Token);
+                        if (string.IsNullOrEmpty(e.Data)) return;
+                        outputBuilder.AppendLine(e.Data);
+                        OnLineDevices.Add(e.Data);
+                    };
+
+                    process.ErrorDataReceived += (sender, e) =>
+                    {
+                        if (string.IsNullOrEmpty(e.Data)) return;
+                        errorBuilder.AppendLine(e.Data);
+                    };
+
+                    // 启动进程
+                    process.Start();
+
+                    // 开始异步读取输出
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    await Task.Delay(1000);
+
+                    await Task.Run(() => { process.WaitForExit(TimeSpan.FromSeconds(30)); });
 
                     LogInfo(
                         $"this round of scan is terminated, all devices:{OnLineDevices.Count} {string.Join('\n', OnLineDevices.ToArray())}");
