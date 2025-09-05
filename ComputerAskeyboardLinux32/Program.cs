@@ -324,7 +324,6 @@ public static class Program
                 .Where(p => p.MacAddress != null)
                 .Select(p => p.MacAddress!)
                 .ToArray());
-            _ = SerialPortExtension.EnableAutoDetectAsync();
         }
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();
@@ -357,6 +356,12 @@ public static class Program
         EnableMouseTrack(_mouseDevice);
 
         Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
+
+        if (parsedArgs.BluetoothPort)
+        {
+            _ = SerialPortExtension.EnableAutoDetectAsync();
+        }
+
         while (true)
         {
             Console.ReadKey(intercept: true);
