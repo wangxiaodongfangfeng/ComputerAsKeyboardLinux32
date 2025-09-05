@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using ComputerAsKeyboardInterface.Bluetooth;
 
 namespace ComputerAsKeyboardInterface;
 
@@ -145,6 +146,7 @@ public static class LinuxCommandHelper
             process.OutputDataReceived += (sender, e) =>
             {
                 if (string.IsNullOrEmpty(e.Data)) return;
+                BluetoothManager.LogInfo(e.Data);
                 outputBuilder.AppendLine(e.Data);
                 onOutputReceived?.Invoke(e.Data);
             };
@@ -152,6 +154,7 @@ public static class LinuxCommandHelper
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (string.IsNullOrEmpty(e.Data)) return;
+                BluetoothManager.LogInfo(e.Data);
                 errorBuilder.AppendLine(e.Data);
                 onErrorReceived?.Invoke(e.Data);
             };
@@ -165,6 +168,7 @@ public static class LinuxCommandHelper
             await Task.Delay(1000);
 
             await process.WaitForExitAsync();
+            BluetoothManager.LogInfo("Exist of Executing in background");
             result.ExitCode = process.ExitCode;
             result.Output = outputBuilder.ToString().TrimEnd();
             result.Error = errorBuilder.ToString().TrimEnd();
