@@ -111,8 +111,8 @@ public static class LinuxCommandHelper
     public static async Task<CommandResult> ExecuteCommandInBackgroundAsync(
         string command,
         string? workingDirectory = null,
-        Action<string>? onOutputReceived = null,
-        Action<string>? onErrorReceived = null)
+        Action<string, Process?>? onOutputReceived = null,
+        Action<string, Process?>? onErrorReceived = null)
     {
         if (string.IsNullOrEmpty(command))
         {
@@ -148,7 +148,7 @@ public static class LinuxCommandHelper
                 if (string.IsNullOrEmpty(e.Data)) return;
                 BluetoothManager.LogInfo(e.Data);
                 outputBuilder.AppendLine(e.Data);
-                onOutputReceived?.Invoke(e.Data);
+                onOutputReceived?.Invoke(e.Data, sender as Process);
             };
 
             process.ErrorDataReceived += (sender, e) =>
@@ -156,7 +156,7 @@ public static class LinuxCommandHelper
                 if (string.IsNullOrEmpty(e.Data)) return;
                 BluetoothManager.LogInfo(e.Data);
                 errorBuilder.AppendLine(e.Data);
-                onErrorReceived?.Invoke(e.Data);
+                onErrorReceived?.Invoke(e.Data, sender as Process);
             };
 
             // 启动进程
@@ -168,7 +168,6 @@ public static class LinuxCommandHelper
             await Task.Delay(1000);
 
             await process.WaitForExitAsync();
-            BluetoothManager.LogInfo("Exist of Executing in background");
             result.ExitCode = process.ExitCode;
             result.Output = outputBuilder.ToString().TrimEnd();
             result.Error = errorBuilder.ToString().TrimEnd();

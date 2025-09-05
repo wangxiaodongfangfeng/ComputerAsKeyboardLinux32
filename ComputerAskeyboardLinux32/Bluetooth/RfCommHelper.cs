@@ -132,13 +132,14 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             var result =
                 await LinuxCommandHelper
                     .ExecuteCommandInBackgroundAsync($"rfcomm connect {port} {macAddress}",
-                        onOutputReceived: (output) =>
+                        onOutputReceived: (output, p) =>
                         {
                             if (output.Contains("Disconnected"))
                                 BluetoothManager.LogInfo("Disconnected recieve from rfcomm");
                             // disconnected
                             if (!output.Contains("Disconnected")) return;
                             var portPath = $"/dev/rfcomm{port}";
+                            p?.Kill(true);
                             RemoveSerialPort(portPath);
                         }
                     );
@@ -152,11 +153,14 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 BluetoothManager.LogInfo("Start to remove serial port");
 
                 var serialPort = SerialPortExtension.GetSerialPort(portPath);
-                if (serialPort is not { IsOpen: true }) return;
-                SerialPortExtension.RemoveSerialPort(portPath);
-                serialPort.Close();
-                serialPort.Dispose();
-                Task.Delay(1000).Wait(TimeSpan.FromSeconds(1));
+                if (serialPort is not null)
+                {
+                    SerialPortExtension.RemoveSerialPort(portPath);
+                    serialPort.Close();
+                    serialPort.Dispose();
+                    Task.Delay(1000).Wait(TimeSpan.FromSeconds(1));
+                }
+
                 if (File.Exists(portPath)) File.Delete(portPath);
                 BluetoothManager.LogInfo($"SerialPort Exist status {File.Exists(portPath)}");
                 BluetoothManager.LogInfo("Stop to remove serial port");
