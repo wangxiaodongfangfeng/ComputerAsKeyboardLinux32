@@ -223,7 +223,6 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                         }
                     };
 
-                    process.Start();
                     var outputBuilder = new StringBuilder();
                     var errorBuilder = new StringBuilder();
 
@@ -256,7 +255,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Start bluetooth scan failed");
+                    Console.WriteLine($"Start bluetooth scan failed {ex.Message}");
                 }
             }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
         }
