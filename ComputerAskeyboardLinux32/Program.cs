@@ -305,26 +305,26 @@ public static class Program
             return;
         }
 
-        if (parsedArgs.BluetoothPort)
-        {
-            var bluetoothManager = new BluetoothManager();
-            var pairedDevices = BluetoothManager.GetPairedDevices();
-            BluetoothManager.LogInfo($"Start to connect:");
-            var index = 0;
-            pairedDevices.ForEach(p =>
-            {
-                var b = BluetoothManager.IsDeviceOnline(p.MacAddress!);
-                if (p.MacAddress != null && b)
-                    _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
-            });
-            Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
-            Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
-
-            _ = bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
-                .Where(p => p.MacAddress != null)
-                .Select(p => p.MacAddress!)
-                .ToArray());
-        }
+        // if (parsedArgs.BluetoothPort)
+        // {
+        //     var bluetoothManager = new BluetoothManager();
+        //     var pairedDevices = BluetoothManager.GetPairedDevices();
+        //     BluetoothManager.LogInfo($"Start to connect:");
+        //     var index = 0;
+        //     pairedDevices.ForEach(p =>
+        //     {
+        //         var b = BluetoothManager.IsDeviceOnline(p.MacAddress!);
+        //         if (p.MacAddress != null && b)
+        //             _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
+        //     });
+        //     Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
+        //     Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
+        //
+        //     _ = bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
+        //         .Where(p => p.MacAddress != null)
+        //         .Select(p => p.MacAddress!)
+        //         .ToArray());
+        // }
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();
 
@@ -357,10 +357,10 @@ public static class Program
 
         Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
 
-        if (parsedArgs.BluetoothPort)
-        {
-            _ = SerialPortExtension.EnableAutoDetectAsync();
-        }
+        // if (parsedArgs.BluetoothPort)
+        // {
+        //    // _ = SerialPortExtension.EnableAutoDetectAsync();
+        // }
 
         while (true)
         {
