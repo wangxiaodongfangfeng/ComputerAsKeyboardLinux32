@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.ComponentModel.Design;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
 using ComputerAsKeyboardInterface.MouseRelated;
@@ -28,6 +27,9 @@ public static class Program
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
+
+    private static List<string> BindingBluetoothDevices { get; set; } = [];
+
     private static int BaudRate { get; set; } = 9600;
     private static bool HasXInput { get; set; } = false;
 
@@ -231,6 +233,8 @@ public static class Program
         InitSpecialKeyMap();
         InitPassword();
         LoadDevicesMapping();
+        // LoadBindingBluetoothDevices();
+
 
         if (HandleInitCommandsWhenInit(args)) return;
 
