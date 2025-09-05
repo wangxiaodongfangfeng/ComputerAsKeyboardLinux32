@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO.Ports;
+using System.Text.RegularExpressions;
+using PowerArgs;
+using Object = Atk.Object;
 
 namespace ComputerAsKeyboardInterface.Bluetooth
 {
@@ -61,7 +64,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
     }
 
     // 蓝牙管理器类
-    public class BluetoothManager
+    public partial class BluetoothManager
     {
         public List<string> OnLineDevices { get; } = [];
 
@@ -106,6 +109,77 @@ namespace ComputerAsKeyboardInterface.Bluetooth
 
             return devices;
         }
+
+        // 新增：检查特定RFCOMM端口是否被占用
+        private static List<string> GetRfcommStatus()
+        {
+            try
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "rfcomm",
+                        Arguments = "-a",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                process.Start();
+                var output = process.StandardOutput.ReadToEnd();
+
+                process.WaitForExit();
+
+                return output.Split(['\r', '\n']).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"检查RFCOMM端口状态时出错: {ex.Message}");
+                return [];
+            }
+        }
+
+        public void EnableBluetoothAutoConnect(string[] macAddresses)
+        {
+            var timer = new Timer(async void (o) =>
+            {
+                var rfCommStatus = GetRfcommStatus();
+
+                macAddresses.ForEach(async void (m) =>
+                {
+                    try
+                    {
+                        var rfStatus = rfCommStatus.FirstOrDefault(r => r.Contains(m));
+                        if (rfStatus != null)
+                        {
+                            if (!rfStatus.Contains("closed")) return;
+                            var matches = RfcommReg().Matches(rfStatus);
+                            if (matches.Count <= 0) return;
+                            var comName = matches.First().Groups["name"];
+                            if (!File.Exists($"/dev/{comName}")) return;
+                            var serialPort = SerialPortExtension.GetSerialPort($"/dev/{comName}");
+                            serialPort?.Close();
+                            serialPort?.Dispose();
+                            await Task.Delay(200);
+                            File.Delete($"/dev/{comName}");
+                            await Task.Delay(200);
+                        }
+
+                        if (OnLineDevices.Any(o => o.Contains(m)))
+                            _ = BluetoothManager2.ConnectRfcommPort(m, FindAvailableRfComPort());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("connect bluetooth failed");
+                    }
+                });
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(60));
+        }
+
+        [GeneratedRegex("(?<name>rfcomm\\d+):", RegexOptions.Multiline)]
+        private static partial Regex RfcommReg();
 
         public void EnableBluetoothAutoDetect()
         {
@@ -155,14 +229,29 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             return OnLineDevices.Any(o => o.Contains(macAddress));
         }
 
-        public int FindAvailableRfComPort()
+        public static int FindAvailableRfComPort()
         {
-            for (var i = 0; i < 65535; i++)
+            for (var i = 0; i < 30; i++)
             {
                 if (!File.Exists("/dev/rfcomm{i}")) return i;
             }
 
             return -1;
+        }
+
+        public static List<int> FindAvailableRfComPorts(int demands)
+        {
+            var result = new List<int>();
+            var tokens = 0;
+            for (var i = 0; i < 30; i++)
+            {
+                if (File.Exists("/dev/rfcomm{i}")) continue;
+                result.Add(i);
+                tokens++;
+                if (tokens == demands) break;
+            }
+
+            return result.Count < demands ? [] : result;
         }
 
         /// <summary>

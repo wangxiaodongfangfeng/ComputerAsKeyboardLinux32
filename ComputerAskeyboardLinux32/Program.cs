@@ -322,6 +322,13 @@ public static class Program
                 var b = devices.Any(d => p.MacAddress != null && d.Contains(p.MacAddress));
                 if (p.MacAddress != null) _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
             });
+            Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
+            Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
+
+            bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
+                .Where(p => p.MacAddress != null)
+                .Select(p => p.MacAddress!)
+                .ToArray());
         }
 
 

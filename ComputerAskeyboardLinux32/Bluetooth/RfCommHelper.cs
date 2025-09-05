@@ -41,7 +41,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
                 Console.WriteLine($"释放RFCOMM端口时出错: {ex.Message}");
             }
         }
-
+        
         // 新增：检查特定RFCOMM端口是否被占用
         private static bool IsRfcommPortInUse(int port)
         {
