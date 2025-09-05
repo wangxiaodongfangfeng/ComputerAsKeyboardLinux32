@@ -146,6 +146,7 @@ namespace ComputerAsKeyboardInterface.Bluetooth
             //BluetoothManager.LogInfo($"Connected to rfcomm{port} task ending, means disconnected?");
             //RemoveSerialPort($"/dev/rfcomm{port}");
             // disconnected
+            Console.WriteLine("this is a test message when exectute command complete");
             return true;
 
             void RemoveSerialPort(string portPath)

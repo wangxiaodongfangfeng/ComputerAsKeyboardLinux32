@@ -1,5 +1,4 @@
-﻿#define TESTBLUETOOTH
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
@@ -321,16 +320,11 @@ public static class Program
             Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
             Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
 
-            bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
+            _ = bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
                 .Where(p => p.MacAddress != null)
                 .Select(p => p.MacAddress!)
                 .ToArray());
         }
-#if TESTBLUETOOTH
-        Console.ReadLine();
-        return;
-#endif
-
 
         ThinkpadKeyLayout.WriteKeyboardOnScreen();
 

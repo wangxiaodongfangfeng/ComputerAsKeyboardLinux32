@@ -1,5 +1,4 @@
-﻿#define TESTBLUETOOTH
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO.Ports;
 using System.Text;
 using System.Text.RegularExpressions;
