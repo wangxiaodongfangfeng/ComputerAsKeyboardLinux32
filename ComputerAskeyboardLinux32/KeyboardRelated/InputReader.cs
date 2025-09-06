@@ -29,10 +29,10 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             _buffer = new byte[_bufferLength];
             _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             _path = path;
-            _ = Run();
+            _ = Task.Run(Run);
         }
 
-        private async Task Run()
+        private void Run()
         {
             var offset = _buffer.Length == LengthOfX64 ? OffsetOfX64 : OffsetOfX86;
             while (true)
@@ -40,7 +40,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 if (_disposing || _stream == null)
                     break;
 
-                await _stream.ReadExactlyAsync(_buffer, 0, _bufferLength);
+                _stream.ReadExactly(_buffer, 0, _bufferLength);
 
 
                 var type = BitConverter.ToInt16([_buffer[offset + 1], _buffer[offset + 2]], 0);
