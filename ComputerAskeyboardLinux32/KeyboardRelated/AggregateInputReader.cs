@@ -9,13 +9,11 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private ConcurrentBag<InputReader>? _readers = [];
         public event InputReader.RaiseKeyPress? OnKeyPress;
         public event InputReader.RaiseMouseMove? OnMouseMove;
-    
+
         public AggregateInputReader(List<string> inputs)
         {
             if (inputs.Count == 0)
-            {
                 inputs = Directory.GetFiles("/dev/input/", "event*").ToList();
-            }
 
             inputs.AsParallel().ForEach(file =>
             {
@@ -25,29 +23,9 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 _readers?.Add(reader);
             });
         }
+        private void ReaderOnOnKeyPress(KeyPressEvent e)=>OnKeyPress?.Invoke(e);
+        private void ReaderOnOnMouseMove(MouseMoveEvent e)=>OnMouseMove?.Invoke(e);
 
-        public AggregateInputReader()
-        {
-            var files = Directory.GetFiles("/dev/input/", "event*");
-
-            files.AsParallel().ForEach(file =>
-            {
-                var reader = new InputReader(file);
-                reader.OnKeyPress += ReaderOnOnKeyPress;
-                reader.OnMouseMove += ReaderOnOnMouseMove;
-                _readers?.Add(reader);
-            });
-        }
-
-        private void ReaderOnOnKeyPress(KeyPressEvent e)
-        {
-            OnKeyPress?.Invoke(e);
-        }
-
-        private void ReaderOnOnMouseMove(MouseMoveEvent e)
-        {
-            OnMouseMove?.Invoke(e);
-        }
 
         public void Dispose()
         {

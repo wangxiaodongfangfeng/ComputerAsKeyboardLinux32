@@ -10,10 +10,11 @@
         void MouseMoveRel(int x, int y, bool keyHold, MouseButtonCode button);
         void MouseMoveRel(int x, int y);
         void KeyDown(SpecialKeyCode specialKeyCode);
+
         /// <summary>
         /// Push key
         /// </summary>
-        /// <param name="CMD">KetType</param>
+        /// <param name="keyGroup"></param>
         /// <param name="k0">special key code</param>
         /// <param name="k1">key code #1</param>
         /// <param name="k2">key code #2</param>

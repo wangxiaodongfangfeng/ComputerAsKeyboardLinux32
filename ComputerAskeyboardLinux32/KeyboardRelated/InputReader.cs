@@ -18,35 +18,29 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private readonly string _path;
 
         private static bool Platform64 => Environment.Is64BitOperatingSystem;
+        private const int LengthOfX64 = 24;
+        private const int LengthOfX86 = 16;
+        private const int OffsetOfX64 = 15;
+        private const int OffsetOfX86 = 7;
 
         public InputReader(string path)
         {
-            _bufferLength = Platform64 ? 24 : 16;
+            _bufferLength = Platform64 ? LengthOfX64 : LengthOfX86;
             _buffer = new byte[_bufferLength];
             _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            this._path = path;
-            new Task(Run).Start();
-            //Task.Run(new Action(Run));
+            _path = path;
+            _ = Run();
         }
 
-        private void Run()
+        private async Task Run()
         {
-            var offset = _buffer.Length == 24 ? 15 : 7;
-            //Program.WriteLogOnScreen($"Start Monitoring Program for input {_path}");
-            //var started = false;
+            var offset = _buffer.Length == LengthOfX64 ? OffsetOfX64 : OffsetOfX86;
             while (true)
             {
-                if (_disposing)
+                if (_disposing || _stream == null)
                     break;
-                //if (!started) Program.WriteLogOnScreen($"Start to Read data from input stream {_path}");
 
-                _stream?.ReadExactly(_buffer, 0, _bufferLength);
-
-                //if (!started)
-                //{
-                //Program.WriteLogOnScreen($"Read data from input stream {_path}");
-                //started = true;
-                //}
+                await _stream.ReadExactlyAsync(_buffer, 0, _bufferLength);
 
 
                 var type = BitConverter.ToInt16([_buffer[offset + 1], _buffer[offset + 2]], 0);
@@ -66,6 +60,16 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                         var e = new MouseMoveEvent(axis, value);
                         OnMouseMove?.Invoke(e);
                         break;
+                    case EventType.EvSyn:
+                    case EventType.EvAbs:
+                    case EventType.EvMsc:
+                    case EventType.EvSw:
+                    case EventType.EvLed:
+                    case EventType.EvSnd:
+                    case EventType.EvRep:
+                    case EventType.EvFf:
+                    case EventType.EvPwr:
+                    case EventType.EvFfStatus:
                     default:
                         break;
                 }
@@ -78,7 +82,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             var s = (KeyState)value;
             var e = new KeyPressEvent(c, s)
             {
-                DevicePath = this._path
+                DevicePath = _path
             };
             OnKeyPress?.Invoke(e);
         }

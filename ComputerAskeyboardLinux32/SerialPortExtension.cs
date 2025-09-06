@@ -10,6 +10,8 @@ public static class SerialPortExtension
 
     public static SerialPort? CurrentSerialPort { get; set; }
 
+    public static int BaudRate { get; set; } = 9600;
+
 
     public static async Task EnableAutoDetectAsync(bool bluetoothPort)
     {
@@ -71,7 +73,7 @@ public static class SerialPortExtension
             if (port.IsOpen) return;
         }
 
-        port = new SerialPort(portName);
+        port = new SerialPort(portName, BaudRate);
         port.Open();
         AllAvailablePorts.Add(portName, port);
         CurrentSerialPort ??= port;
@@ -85,6 +87,7 @@ public static class SerialPortExtension
         {
             CurrentSerialPort = AllAvailablePorts.Count > 0 ? AllAvailablePorts.Values.First() : null;
         }
+
         port?.Close();
         port?.Dispose();
     }

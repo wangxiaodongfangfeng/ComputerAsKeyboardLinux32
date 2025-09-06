@@ -338,6 +338,7 @@ public static class Program
             aggHandler1.WithKeyTogglingOnScreen();
         }
 
+        SerialPortExtension.BaudRate = parsedArgs.BaudRate;
 
         if (parsedArgs.AutoScan)
         {
@@ -676,7 +677,7 @@ public static class Program
             {
                 Logs.TryDequeue(out var result);
             }
-            
+
             Logs.Enqueue(log);
             var index = 0;
             foreach (var content in Logs.ToList())
@@ -691,7 +692,7 @@ public static class Program
     {
         return bluetooth
             ? new Btk05(port, baudRate: BaudRate)
-            : new Ch9329(port, baudRate: BaudRate);
+            : new Ch9329();
     }
 
     /// <summary>

@@ -6,25 +6,15 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
     public class Ch9329 : IKeyboard
     {
-        private readonly int _xSize;
-
-        private readonly int _ySize;
-
         //private static SerialPort? _serialPort;
         private static readonly ConcurrentQueue<byte[]> Buffer = new();
         private readonly CancellationTokenSource? _cancellationTokenSource;
 
 
-        public Ch9329(string portName = "COM5", int xSize = 1920, int ySize = 1080, int baudRate = 9600)
+        public Ch9329()
         {
             _cancellationTokenSource = new CancellationTokenSource();
-            _xSize = xSize;
-            _ySize = ySize;
-            //_serialPort = new SerialPort(portName, baudRate);
-            //_serialPort.Open();
             CreateCharKeyTable();
-            //CreateMediaKeyTable();
-            //CreateKeyTable();
             if (Program.UseQueue)
             {
                 _ = Task.Run(() => SerialPortDataHandler(_cancellationTokenSource.Token));
@@ -35,7 +25,6 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         {
             while (token.IsCancellationRequested == false)
             {
-                //await Task.Delay(20, token);
                 var result = Buffer.TryDequeue(out var data);
                 if (!result) continue;
                 try
@@ -45,14 +34,13 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 catch (Exception)
                 {
                     Program.WriteLogOnScreen("Failed Send data to serial port");
-                    continue;
                 }
             }
 
             return Task.CompletedTask;
         }
 
-        private Dictionary<string, byte[]> _charKeyTable;
+        private Dictionary<string, byte[]> _charKeyTable = [];
 
         /// <summary>
         /// create 109A CharKeyTable
@@ -253,7 +241,6 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                     : [0x57, 0xAB, 0x00, (int)keyGroup, 0x04, k0, k1, k2, k3];
 
             var keyDownPacket = CreatePacketArray(keyDownPacketListInt, true);
-
             SendPacket(keyDownPacket);
         }
 
@@ -302,41 +289,10 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
                 Thread.Sleep(10);
                 KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0x00, 0, 0, 0, 0);
-
-                //CharKeyType(0x00, dat[1], dat[0]);
             }
+
+            KeyDown(KeyGroup.CharKey, 0x00, 0x00, 0x00, 0, 0, 0, 0);
         }
-
-        public void MouseMoveAbs(int x, int y)
-        {
-            var xAbs = (int)(4096 * x / _xSize);
-            var yAbs = (int)(4096 * y / _ySize);
-
-            // ========================
-            // mouseMoveAbsPacketContents
-            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x04} + LEN{0x07} + DATA{0x02, 0x00, [x],[x],[y],[y], 0x00}
-            // CMD = 0x04 : USB mouse absolute mode
-            // ========================
-            List<int> mouseMoveAbsPacketListInt =
-            [
-                0x57,
-                0xAB,
-                0x00,
-                0x04,
-                0x07,
-                0x02,
-                0x00,
-                (byte)(xAbs & 0xff),
-                (byte)(xAbs >> 8),
-                (byte)(yAbs & 0xff),
-                (byte)(yAbs >> 8),
-                0x00
-            ];
-
-            byte[] mouseMoveAbsPacket = CreatePacketArray(mouseMoveAbsPacketListInt, true);
-            SendPacket(mouseMoveAbsPacket);
-        }
-
 
         public void MouseMoveRel(int x, int y, bool keyHold, MouseButtonCode button)
         {

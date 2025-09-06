@@ -1,4 +1,6 @@
-﻿namespace ComputerAsKeyboardInterface
+﻿using ComputerAsKeyboardInterface.KeyboardRelated;
+
+namespace ComputerAsKeyboardInterface
 {
     public static class MenuHandler
     {

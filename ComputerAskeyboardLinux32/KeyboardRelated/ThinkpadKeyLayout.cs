@@ -1,6 +1,4 @@
-﻿using ComputerAsKeyboardInterface.KeyboardRelated;
-
-namespace ComputerAsKeyboardInterface
+﻿namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
     public class ThinkpadKeyLayout
     {

@@ -1,17 +1,11 @@
 namespace ComputerAsKeyboardInterface.KeyboardRelated
 {
-    public class KeyPressEvent : EventArgs
+    public class KeyPressEvent(EventCode code, KeyState state) : EventArgs
     {
-        public KeyPressEvent(EventCode code, KeyState state)
-        {
-            this.Code = code;
-            this.State = state;
-        }
+        public string? DevicePath { get; init; }
 
-        public string DevicePath { get; set; }
+        public EventCode Code { get; set; } = code;
 
-        public EventCode Code { get; set; }
-
-        public KeyState State { get; set; }
+        public KeyState State { get; set; } = state;
     }
 }
