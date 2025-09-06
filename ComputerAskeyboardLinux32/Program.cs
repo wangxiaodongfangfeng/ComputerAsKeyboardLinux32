@@ -397,7 +397,6 @@ public static class Program
             case EventCode.LeftMouse:
             case EventCode.RightMouse:
             case EventCode.MiddleMouse:
-            case EventCode.Touch:
                 if (!KeyboardDisabled) HandleMouseKey(e, isMacOs);
                 return true;
         }
@@ -532,10 +531,7 @@ public static class Program
         var lastCodeCount = 0;
         reader.OnKeyPress += (e) =>
         {
-            if (e.Code != EventCode.Wakeup)
-            {
-            }
-            else if (e.State is KeyState.KeyDown or KeyState.KeyHold)
+            if (e is { Code: EventCode.Wakeup, State: KeyState.KeyDown or KeyState.KeyHold })
             {
                 lastCodeCount++;
                 if (lastCodeCount <= 20) return;
@@ -589,7 +585,6 @@ public static class Program
             EventCode.LeftMouse => MouseButtonCode.Left,
             EventCode.RightMouse => MouseButtonCode.Right,
             EventCode.MiddleMouse => MouseButtonCode.Middle,
-            EventCode.Touch => MouseButtonCode.Left,
             _ => MouseButtonCode.Left
         };
 
@@ -605,7 +600,6 @@ public static class Program
             }
 
             MouseKeyHold = true;
-            HoldMouseKey = mouse;
         }
         else
         {
@@ -619,10 +613,9 @@ public static class Program
             }
 
             MouseKeyHold = false;
-            HoldMouseKey = mouse;
         }
 
-        return;
+        HoldMouseKey = mouse;
     }
 
     /// <summary>

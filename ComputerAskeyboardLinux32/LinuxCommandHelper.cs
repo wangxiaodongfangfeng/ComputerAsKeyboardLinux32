@@ -49,18 +49,12 @@ public static class LinuxCommandHelper
             // 异步处理输出
             process.OutputDataReceived += (sender, e) =>
             {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    outputBuilder.AppendLine(e.Data);
-                }
+                if (!string.IsNullOrEmpty(e.Data)) outputBuilder.AppendLine(e.Data);
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    errorBuilder.AppendLine(e.Data);
-                }
+                if (!string.IsNullOrEmpty(e.Data)) errorBuilder.AppendLine(e.Data);
             };
 
             // 启动进程

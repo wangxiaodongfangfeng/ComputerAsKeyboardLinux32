@@ -2,7 +2,7 @@
 
 namespace ComputerAsKeyboardInterface
 {
-    internal partial class DeviceResolver
+    internal static partial class DeviceResolver
     {
         // 用于匹配设备名称的正则表达式（N: Name="..."）
         private static readonly Regex NameRegex = MyRegex();
