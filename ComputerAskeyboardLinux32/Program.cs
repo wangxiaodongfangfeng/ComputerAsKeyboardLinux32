@@ -666,7 +666,7 @@ public static class Program
 
     public static void WriteLogOnScreen(string log)
     {
-        if (_background) Console.Write(log);
+        if (_background) Console.WriteLine(log);
         if (_background) return;
 
         lock (Logs)
@@ -676,7 +676,7 @@ public static class Program
             {
                 Logs.TryDequeue(out var result);
             }
-
+            
             Logs.Enqueue(log);
             var index = 0;
             foreach (var content in Logs.ToList())
