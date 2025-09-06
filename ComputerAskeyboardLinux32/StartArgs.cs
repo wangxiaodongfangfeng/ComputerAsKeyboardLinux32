@@ -35,7 +35,7 @@ namespace ComputerAsKeyboardInterface
 
         [ArgDescription("use fingerprint")]
         [DefaultValue(false)]
-        public bool Fingerprint { get; set; }
+        public bool Fprint { get; set; }
 
         [ArgDescription("If use queue to send command")]
         [DefaultValue(false)]
@@ -48,5 +48,9 @@ namespace ComputerAsKeyboardInterface
         [ArgDescription("if use bluetooth serial port")]
         [DefaultValue(false)]
         public bool BluetoothPort { get; set; }
+
+        [ArgDescription("running this program in background")]
+        [DefaultValue(false)]
+        public bool Background { get; set; }
     }
 }

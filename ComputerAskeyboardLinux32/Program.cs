@@ -18,6 +18,7 @@ public static class Program
     private static IKeyboard? _keyboard;
     private static bool _fingerPrint = false;
     private static bool CommandMode { get; set; }
+    private static bool _background { get; set; } = false;
 
     public static string? Password { get; set; }
 
@@ -295,7 +296,8 @@ public static class Program
             _switchAlt = parsedArgs.MacOs;
             _mouseDevice = parsedArgs.Mouse ?? "mouse0";
             _bluetooth = parsedArgs.Bluetooth;
-            _fingerPrint = parsedArgs.Fingerprint;
+            _fingerPrint = parsedArgs.Fprint;
+            _background = parsedArgs.Background;
             UseQueue = parsedArgs.Queue;
             BaudRate = parsedArgs.BaudRate;
         }
@@ -326,12 +328,16 @@ public static class Program
         //         .ToArray());
         // }
 
-        ThinkpadKeyLayout.WriteKeyboardOnScreen();
-
 
         Console.TreatControlCAsInput = true;
-        using var aggHandler1 = new AggregateInputReader(InputDevices);
-        aggHandler1.WithKeyTogglingOnScreen();
+
+        if (!parsedArgs.Background)
+        {
+            ThinkpadKeyLayout.WriteKeyboardOnScreen();
+            using var aggHandler1 = new AggregateInputReader(InputDevices);
+            aggHandler1.WithKeyTogglingOnScreen();
+        }
+
 
         if (parsedArgs.AutoScan)
         {
@@ -380,6 +386,10 @@ public static class Program
             case EventCode.Back or EventCode.Forward when isMacOs:
                 if (!KeyboardDisabled) HandleBackAndForwardForMacOs(keyCode, e.State);
                 return true;
+            case EventCode.Back or EventCode.Forward when !isMacOs:
+                if (!KeyboardDisabled) HandleBackAndForwardForWindowsAndLinux(keyCode, e.State);
+                return true;
+
             //MacOS use Compose to show menu
             case EventCode.Compose when isMacOs:
                 break;
@@ -636,10 +646,29 @@ public static class Program
         }
     }
 
+    private static void HandleBackAndForwardForWindowsAndLinux(EventCode code, KeyState keyState)
+    {
+        if (_keyboard == null)
+            return;
+        if (keyState == KeyState.KeyDown)
+        {
+            var value = code == EventCode.Back ? 0x50 : 0x4F;
+            //send Ctrl+Meta+<- or Ctrl+Meta + ->
+            _keyboard.KeyDown(KeyGroup.CharKey, (byte)0x09, (byte)value);
+        }
+        else
+        {
+            _keyboard.KeyUpAll();
+        }
+    }
+
     private static readonly ConcurrentQueue<string> Logs = new();
 
     public static void WriteLogOnScreen(string log)
     {
+        if (_background) Console.Write(log);
+        if (_background) return;
+
         lock (Logs)
         {
             if (MenuHandler.CommandMode) return;
