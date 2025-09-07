@@ -1,0 +1,13 @@
+﻿[Unit]
+Description=AutoConnectBluetoothInPairedList  
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+WorkingDirectory=/home/ford  
+ExecStart=/usr/bin/python3 /home/ford/bluetooth_auto_connect.py  
+Restart=always          
+RestartSec=5            
+
+[Install]
+WantedBy=multi-user.target  

@@ -1,0 +1,13 @@
+﻿[Unit]
+Description=RunningKeyboardInBackground  
+After=autoconnect.service
+Requires=autoconnect.service
+
+[Service]
+WorkingDirectory=/home/ford/publish  
+ExecStart=/home/ford/publish/ford-keyboard -V false -Ba 115200 -BluetoothPort true -background true  
+Restart=on-failure               
+RestartSec=5            
+
+[Install]
+WantedBy=multi-user.target  
