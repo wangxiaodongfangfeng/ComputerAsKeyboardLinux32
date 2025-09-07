@@ -69,7 +69,9 @@ public static class Program
         if (!File.Exists(".devices")) return;
         var devices = File.ReadAllLines(".devices");
         InputDevices = devices.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
-        MouseDevices = devices.Select(c => DeviceResolver.MouseDevicesMapping[c]).ToList();
+        MouseDevices = devices
+            .Where(d => DeviceResolver.MouseDevicesMapping.ContainsKey(d))
+            .Select(c => DeviceResolver.MouseDevicesMapping[c]).ToList();
     }
 
     private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
