@@ -10,21 +10,26 @@ namespace ComputerAsKeyboardInterface
         // 用于匹配event路径的正则表达式（H: Handlers=...eventX...）
         private static readonly Regex EventRegex = MyRegex1();
 
-        internal static Dictionary<string, string> InputDevicesMapping = new Dictionary<string, string>();
+        private static readonly Regex MouseRegexPattern = MouseRegex();
+
+        internal static Dictionary<string, string> InputDevicesMapping = new();
+        internal static Dictionary<string, string> MouseDevicesMapping = new();
 
         /// <summary>
         /// 从/proc/bus/input/devices解析设备名称与event路径的映射
         /// </summary>
-        public static Dictionary<string, string> GetInputDevicesFromProc()
+        public static void GetInputDevicesFromProc()
         {
             var deviceMap = new Dictionary<string, string>();
+            var mouseMap = new Dictionary<string, string>();
             const string procPath = "/proc/bus/input/devices";
 
-            if (!File.Exists(procPath)) return deviceMap;
+            if (!File.Exists(procPath)) return;
 
             var lines = File.ReadAllLines(procPath);
             string? currentName = null;
             string? currentEvent = null;
+            string? currentMouse = null;
 
             foreach (var line in lines)
             {
@@ -40,10 +45,15 @@ namespace ComputerAsKeyboardInterface
                 if (line.StartsWith("H: Handlers="))
                 {
                     var eventMatch = EventRegex.Match(line);
-                    if (eventMatch.Success)
-                    {
-                        currentEvent = $"/dev/input/{eventMatch.Value}";
-                    }
+                    var mouseMatch = MouseRegexPattern.Match(line);
+                    if (eventMatch.Success) currentEvent = $"/dev/input/{eventMatch.Value}";
+                    if (mouseMatch.Success) currentMouse = $"/dev/input/{mouseMatch.Value}";
+                }
+
+                if (!string.IsNullOrWhiteSpace(line) && !string.IsNullOrEmpty(currentMouse) &&
+                    !string.IsNullOrEmpty(currentName))
+                {
+                    mouseMap.TryAdd(currentName, currentMouse);
                 }
 
                 // 空行表示一个设备信息块结束，添加到字典
@@ -53,10 +63,11 @@ namespace ComputerAsKeyboardInterface
                 // 重置当前设备信息
                 currentName = null;
                 currentEvent = null;
+                currentMouse = null;
             }
 
             InputDevicesMapping = deviceMap;
-            return deviceMap;
+            MouseDevicesMapping = mouseMap;
         }
 
         [GeneratedRegex("""^N: Name="(.*)"$""")]
@@ -65,6 +76,8 @@ namespace ComputerAsKeyboardInterface
         [GeneratedRegex(@"event\d+")]
         private static partial Regex MyRegex1();
 
+        [GeneratedRegex(@"mouse\d+")]
+        private static partial Regex MouseRegex();
 
         /// <summary>
         /// 执行xinput list命令并解析结果

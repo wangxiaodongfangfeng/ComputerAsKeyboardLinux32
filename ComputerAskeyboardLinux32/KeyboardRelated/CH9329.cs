@@ -359,7 +359,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private readonly byte[] _mouseButtonUpPacketForMac =
             [0x57, 0xAB, 0x00, 0x04, 0x07, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F];
 
-        public void MouseButtonDownForMac(MouseButtonCode buttonCode)
+        public bool MouseButtonDownForMac(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -372,11 +372,13 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
             var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, true);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAllForMac()
+        public bool MouseButtonUpAllForMac()
         {
             SendPacket(_mouseButtonUpPacketForMac);
+            return true;
         }
 
         public void MouseScrollForMac(int value)
@@ -401,7 +403,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         private readonly byte[] _mouseButtonUpPacket =
             [0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x0D];
 
-        public void MouseButtonDown(MouseButtonCode buttonCode)
+        public bool MouseButtonDown(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -411,13 +413,26 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             List<int> mouseButtonDownPacketListInt = [0x57, 0xAB, 0x00, 0x05, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00];
             mouseButtonDownPacketListInt[6] = (int)buttonCode;
 
-            byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, true);
+            var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, true);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAll()
+        public bool ToggleMouseButton(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDown(mouseCode) : MouseButtonUpAll();
+        }
+
+        public bool ToggleMouseButtonForMac(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDownForMac(mouseCode) : MouseButtonUpAllForMac();
+        }
+
+
+        public bool MouseButtonUpAll()
         {
             SendPacket(_mouseButtonUpPacket);
+            return true;
         }
 
         private void MouseClick(MouseButtonCode buttonCode)

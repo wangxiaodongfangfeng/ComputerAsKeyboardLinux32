@@ -234,7 +234,7 @@ public class CommandResult
     }
 }
 
-public class LinuxCommandChecker
+public static class LinuxCommandChecker
 {
     // 判断命令是否存在
     public static bool IsCommandExists(string command)

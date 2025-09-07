@@ -15,7 +15,7 @@ namespace ComputerAsKeyboardInterface
                                                    |============================================================|
                                                    """;
 
-        public static bool CommandMode { get; private set; }
+        public static bool CommandMode { get; set; }
 
         public static Action? BeforeExitApplication { get; set; }
 
@@ -34,6 +34,7 @@ namespace ComputerAsKeyboardInterface
                         chars.Add(chartList);
                         return;
                     }
+
                     chartList.Add(c);
                 });
                 return chars;
@@ -42,7 +43,7 @@ namespace ComputerAsKeyboardInterface
 
         public static void StartMenu()
         {
-        showMenu:
+            showMenu:
             Console.Clear();
             Console.CursorVisible = true;
             Console.SetCursorPosition(0, 0);
@@ -53,17 +54,22 @@ namespace ComputerAsKeyboardInterface
 
             var leftOffset = (width - MenuChars[1].Count) / 2;
             var topOffset = (height - MenuChars.Count) / 2;
-            for (var i = 0; i < topOffset; i++) { Console.WriteLine(); }
+            for (var i = 0; i < topOffset; i++)
+            {
+                Console.WriteLine();
+            }
+
             MenuChars.ForEach(chars =>
             {
                 for (var i = 0; i < leftOffset; i++)
                 {
                     Console.Write(" ");
                 }
+
                 chars.ForEach(Console.Write);
                 Console.WriteLine();
             });
-        readagin:
+            readagin:
             var menu = Console.ReadKey();
             switch (menu.KeyChar)
             {
@@ -100,6 +106,7 @@ namespace ComputerAsKeyboardInterface
             CommandMode = false;
             ThinkpadKeyLayout.WriteKeyboardOnScreen();
         }
+
         private static void FunctionForSetPassword()
         {
             Console.Clear();
@@ -117,7 +124,6 @@ namespace ComputerAsKeyboardInterface
 
         private static void HandleRefreshKeyboard()
         {
-
         }
     }
 }

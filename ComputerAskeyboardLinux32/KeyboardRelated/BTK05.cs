@@ -558,7 +558,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         readonly byte[] _mouseButtonUpPacketForMac =
             [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-        public void MouseButtonDownForMac(MouseButtonCode buttonCode)
+        public bool MouseButtonDownForMac(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -570,11 +570,13 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
             byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAllForMac()
+        public bool MouseButtonUpAllForMac()
         {
             SendPacket(_mouseButtonUpPacketForMac);
+            return true;
         }
 
         public void MouseScrollForMac(int value)
@@ -600,7 +602,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         /// </summary>
         readonly byte[] _mouseButtonUpPacket = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-        public void MouseButtonDown(MouseButtonCode buttonCode)
+        public bool MouseButtonDown(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -612,11 +614,23 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
             byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAll()
+        public bool ToggleMouseButton(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDown(mouseCode) : MouseButtonUpAll();
+        }
+
+        public bool ToggleMouseButtonForMac(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDownForMac(mouseCode) : MouseButtonUpAllForMac();
+        }
+
+        public bool MouseButtonUpAll()
         {
             SendPacket(_mouseButtonUpPacket);
+            return true;
         }
 
         public void MouseClick(MouseButtonCode buttonCode)

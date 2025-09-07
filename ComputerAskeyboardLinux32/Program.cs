@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
@@ -18,7 +19,7 @@ public static class Program
     private static IKeyboard? _keyboard;
     private static bool _fingerPrint = false;
     private static bool CommandMode { get; set; }
-    private static bool _background { get; set; } = false;
+    private static bool Background { get; set; } = false;
 
     public static string? Password { get; set; }
 
@@ -29,6 +30,7 @@ public static class Program
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
+    private static List<string> MouseDevices { get; set; } = [];
 
     private static List<string> BindingBluetoothDevices { get; set; } = [];
 
@@ -67,6 +69,7 @@ public static class Program
         if (!File.Exists(".devices")) return;
         var devices = File.ReadAllLines(".devices");
         InputDevices = devices.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
+        MouseDevices = devices.Select(c => DeviceResolver.MouseDevicesMapping[c]).ToList();
     }
 
     private static void WithKeyTogglingOnScreen(this AggregateInputReader reader)
@@ -160,23 +163,22 @@ public static class Program
             _toggle = !_toggle;
             WriteLogOnScreen($"Toggle is {(_toggle ? "on" : "off")} now");
 
-            if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
-            var command = _toggle ? "disable" : "enable";
-            try
-            {
-                ToggleInputDeviceIds.ForEach(id =>
-                {
-#if DEBUG
-                    WriteLogOnScreen($"ExecuteCommand xinput {command} {id}");
-#endif
-                    LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}");
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            ToggleDevices(_toggle);
         };
+    }
+
+    private static void ToggleDevices(bool toggle)
+    {
+        if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
+        var command = toggle ? "disable" : "enable";
+        try
+        {
+            ToggleInputDeviceIds.ForEach(id => { LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}"); });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 
     private static void EnableMuteSwitch(this AggregateInputReader reader)
@@ -228,7 +230,6 @@ public static class Program
 
     // Path to the directory where ttyUSB devices are located
     private static string _ttyUsbDirectory = "/dev/";
-    private static string _mouseDevice = "mouse0";
 
     public static void Main(string[] args)
     {
@@ -294,10 +295,9 @@ public static class Program
             _ttyUsbDirectory = parsedArgs.ScanPath ?? "/dev/";
             _mute = !parsedArgs.Verbose;
             _switchAlt = parsedArgs.MacOs;
-            _mouseDevice = parsedArgs.Mouse ?? "mouse0";
             _bluetooth = parsedArgs.Bluetooth;
             _fingerPrint = parsedArgs.Fprint;
-            _background = parsedArgs.Background;
+            Background = parsedArgs.Background;
             UseQueue = parsedArgs.Queue;
             BaudRate = parsedArgs.BaudRate;
         }
@@ -360,13 +360,9 @@ public static class Program
         aggHandler.EnableKeyboardSwitch();
         aggHandler.EnableMuteSwitch();
         aggHandler.EnableMenuFunction();
-        EnableMouseTrack(_mouseDevice);
+        EnableMouseTrack(isMacOs: parsedArgs.MacOs);
 
         Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
-
-        // if (parsedArgs.BluetoothPort)
-        // {
-        // }
 
         _ = SerialPortExtension.EnableAutoDetectAsync(parsedArgs.BluetoothPort);
         while (true)
@@ -524,27 +520,94 @@ public static class Program
         return keyCode;
     }
 
+    private static void Beep()
+    {
+        try
+        {
+            if (!File.Exists("/usr/local/bin/safe-beep")) return;
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "/usr/local/bin/safe-beep",
+                Arguments = "", // 传递beep的参数
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+
+            // 3. 执行命令
+            using var process = Process.Start(startInfo);
+            var output = process?.StandardOutput.ReadToEnd();
+            var error = process?.StandardError.ReadToEnd();
+            process?.WaitForExit();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"异常：{ex.Message}");
+        }
+    }
+
     private static void EnableMenuFunction(this AggregateInputReader reader)
     {
         MenuHandler.BeforeExitApplication = () => { _keyboard?.KeyUpAll(); };
         // long touch fn will show menu;
         var lastCodeCount = 0;
+        var waitingForCommand = false;
         reader.OnKeyPress += (e) =>
         {
+            if (waitingForCommand)
+            {
+                if (e is { Code: EventCode.E })
+                {
+                    if (LinuxCommandChecker.IsCommandExists("beep"))
+                    {
+                        Beep();
+                        Task.Delay(200).Wait();
+                        Beep();
+                        Task.Delay(200).Wait();
+                    }
+
+                    _keyboard?.KeyUpAll(KeyGroup.CharKey);
+                    ToggleDevices(false);
+                    Environment.Exit(0);
+                }
+
+                if (e is not { Code: EventCode.Wakeup })
+                {
+                    waitingForCommand = false;
+                    MenuHandler.CommandMode = false;
+                }
+            }
+
             if (e is { Code: EventCode.Wakeup, State: KeyState.KeyDown or KeyState.KeyHold })
             {
                 lastCodeCount++;
                 if (lastCodeCount <= 20) return;
-                MenuHandler.StartMenu();
+                switch (Background)
+                {
+                    case true:
+                        if (LinuxCommandChecker.IsCommandExists("beep")) Beep();
+                        break;
+                    case false:
+                        MenuHandler.StartMenu();
+                        break;
+                }
+
+                if (Background)
+                {
+                    MenuHandler.CommandMode = true;
+                    waitingForCommand = true;
+                }
             }
 
             lastCodeCount = 0;
         };
     }
 
-    private static void EnableMouseTrack(string mouseDevice)
+    private static void EnableMouseTrack(bool isMacOs)
     {
-        var mouseReader = new MouseReader($"/dev/input/{mouseDevice}");
+        var mouseReader =
+            new AggregateMouseReader(MouseDevices.ToList());
         mouseReader.OnMouseMove += (e) =>
         {
             if (KeyboardDisabled) return;
@@ -553,7 +616,12 @@ public static class Program
         mouseReader.OnMouseScroll += (e) =>
         {
             if (KeyboardDisabled) return;
-            _keyboard?.MouseScrollForMac(e.ScrollCount);
+            if (isMacOs)
+                _keyboard?.MouseScrollForMac(e.ScrollCount);
+            else if (_keyboard is Ch9329 ch9329)
+            {
+                ch9329.MouseScroll(e.ScrollCount);
+            }
         };
     }
 
@@ -587,34 +655,10 @@ public static class Program
             EventCode.MiddleMouse => MouseButtonCode.Middle,
             _ => MouseButtonCode.Left
         };
-
-        if (e.State is KeyState.KeyDown or KeyState.KeyHold)
-        {
-            if (macos)
-            {
-                _keyboard.MouseButtonDownForMac(mouse);
-            }
-            else
-            {
-                _keyboard.MouseButtonDown(mouse);
-            }
-
-            MouseKeyHold = true;
-        }
-        else
-        {
-            if (macos)
-            {
-                _keyboard.MouseButtonUpAllForMac();
-            }
-            else
-            {
-                _keyboard.MouseButtonUpAll();
-            }
-
-            MouseKeyHold = false;
-        }
-
+        MouseKeyHold = e.State is KeyState.KeyDown or KeyState.KeyHold;
+        _ = macos
+            ? _keyboard.ToggleMouseButtonForMac(MouseKeyHold, mouse)
+            : _keyboard.ToggleMouseButton(MouseKeyHold, mouse);
         HoldMouseKey = mouse;
     }
 
@@ -660,8 +704,8 @@ public static class Program
 
     public static void WriteLogOnScreen(string log)
     {
-        if (_background) Console.WriteLine(log);
-        if (_background) return;
+        if (Background) Console.WriteLine(log);
+        if (Background) return;
 
         lock (Logs)
         {
