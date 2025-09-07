@@ -95,7 +95,6 @@
         }
 
         private readonly List<List<EventCode>> _keyLayout;
-
         public ThinkpadKeyLayout()
         {
             var firstRow = new List<EventCode>

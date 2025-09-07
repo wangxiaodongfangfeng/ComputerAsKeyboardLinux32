@@ -24,11 +24,6 @@ namespace ComputerAsKeyboardInterface
         [DefaultValue(false)]
         public bool MacOs { get; set; }
 
-        [ArgDescription("mouse device")]
-        [DefaultValue("mouse0")]
-        public string? Mouse { get; set; }
-
-
         [ArgDescription("start-bluetooth-version")]
         [DefaultValue(false)]
         public bool Bluetooth { get; set; }
