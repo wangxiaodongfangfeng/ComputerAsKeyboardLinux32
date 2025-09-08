@@ -5,6 +5,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputerAskeyboardLinux32",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreenSender", "ScreenSender\ScreenSender.csproj", "{B268B45D-0053-4435-9552-4A5514DB7B30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyboardKeeper", "KeyboardKeeper\KeyboardKeeper.csproj", "{5964BF0E-2262-42EA-811C-598DD564D9AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyboardKeeperCient", "KeyboardKeeperCient\KeyboardKeeperCient.csproj", "{172860CA-7D91-480A-BA93-806F10E77DCD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,5 +23,13 @@ Global
 		{B268B45D-0053-4435-9552-4A5514DB7B30}.Debug|x86.Build.0 = Debug|Any CPU
 		{B268B45D-0053-4435-9552-4A5514DB7B30}.Release|x86.ActiveCfg = Release|Any CPU
 		{B268B45D-0053-4435-9552-4A5514DB7B30}.Release|x86.Build.0 = Release|Any CPU
+		{5964BF0E-2262-42EA-811C-598DD564D9AF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5964BF0E-2262-42EA-811C-598DD564D9AF}.Debug|x86.Build.0 = Debug|Any CPU
+		{5964BF0E-2262-42EA-811C-598DD564D9AF}.Release|x86.ActiveCfg = Release|Any CPU
+		{5964BF0E-2262-42EA-811C-598DD564D9AF}.Release|x86.Build.0 = Release|Any CPU
+		{172860CA-7D91-480A-BA93-806F10E77DCD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{172860CA-7D91-480A-BA93-806F10E77DCD}.Debug|x86.Build.0 = Debug|Any CPU
+		{172860CA-7D91-480A-BA93-806F10E77DCD}.Release|x86.ActiveCfg = Release|Any CPU
+		{172860CA-7D91-480A-BA93-806F10E77DCD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
