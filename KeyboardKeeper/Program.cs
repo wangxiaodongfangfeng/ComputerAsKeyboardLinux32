@@ -81,6 +81,33 @@ internal class XInputTcpServer
     {
         // 命令格式应该是: xinput [disable|enable] [设备ID]
         var parts = command.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2) return command;
+        var operation = parts[1];
+
+        if (parts.Length == 2 || parts[0].Equals("input", StringComparison.OrdinalIgnoreCase))
+        {
+            if (operation != "disable" && operation != "enable" && operation != "list")
+            {
+                return "无效操作。请使用 disable 或 enable 或 list";
+            }
+            switch (operation)
+            {
+                case "disable":
+                case "enable":
+                    if (!File.Exists(".toggle_devices")) break;
+                    var allLines = File.ReadAllLines(".toggle_devices");
+                    var result = string.Empty;
+                    allLines.ToList().ForEach(line =>
+                    {
+                        result += ExecuteXInputCommand(operation, line.Contains(' ') ? $"'{line}'" : line);
+                    });
+                    return result;
+                case "list":
+                    return ExecuteXInputCommand(operation);
+            }
+            return string.Empty;
+        }
+
 
         // 验证命令格式
         if (parts.Length != 3 || !parts[0].Equals("xinput", StringComparison.OrdinalIgnoreCase))
@@ -88,7 +115,6 @@ internal class XInputTcpServer
             return "无效命令格式。正确格式: xinput [disable|enable] [设备ID]";
         }
 
-        var operation = parts[1];
         if (operation != "disable" && operation != "enable" && operation != "list")
         {
             return "无效操作。请使用 disable 或 enable 或 list";
@@ -98,10 +124,10 @@ internal class XInputTcpServer
             ? ExecuteXInputCommand(operation)
             : !int.TryParse(parts[2], out var deviceId)
                 ? "无效的设备ID。请提供整数ID"
-                : ExecuteXInputCommand(operation, deviceId); // 执行xinput命令
+                : ExecuteXInputCommand(operation, deviceId.ToString()); // 执行xinput命令
     }
 
-    private static string ExecuteXInputCommand(string operation, int? deviceId = null)
+    private static string ExecuteXInputCommand(string operation, string? deviceId = null)
     {
         try
         {
