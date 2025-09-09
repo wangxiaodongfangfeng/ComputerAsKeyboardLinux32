@@ -525,11 +525,30 @@ public static class Program
             _keyboard?.KeyDown(KeyGroup.MediaKey, 0x02, 0, 0, 0);
     }
 
+    private static bool FnDown { get; set; }
+
     private static void SwitchKeySlot(EventCode keyCode, bool push, ThinkpadKeyMapTo9329 thinkpadKey)
     {
         if (!thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte)) return;
+        if (keyByte == 0x8f)
+        {
+            FnDown = push;
+            return;
+        }
+
         if (push)
         {
+            switch (FnDown)
+            {
+                //fn+tab
+                case true when keyCode == EventCode.Tab:
+                    SerialPortExtension.SwitchSerialPort();
+                    return;
+                case true when keyCode == EventCode.P:
+                    HandleInputPassword();
+                    return;
+            }
+
             //push
             //if we don't have a duplicated key,find a new slot
             if (!KeySlots.Contains(keyByte))
@@ -546,6 +565,11 @@ public static class Program
         }
 
         SendCharKeyDown();
+    }
+
+    private static bool IsFnCompositeKey(this byte[] keySlots)
+    {
+        return false;
     }
 
     private static void SendCharKeyDown()
