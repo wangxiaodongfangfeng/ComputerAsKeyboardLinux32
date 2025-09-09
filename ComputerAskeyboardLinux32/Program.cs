@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Text;
 using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
 using ComputerAsKeyboardInterface.KeyboardRelated;
@@ -185,6 +187,49 @@ public static class Program
         }
         else
         {
+            ToggleInputDeviceIds.ForEach(id => { _ = SendXInputCommand(command, id, XinputServicePort); });
+        }
+    }
+
+    /// <summary>
+    /// 发送xinput命令到服务器
+    /// </summary>
+    /// <param name="operation">操作类型：disable或enable</param>
+    /// <param name="deviceId">设备ID</param>
+    /// <param name="serverPort"></param>
+    /// <returns>服务器响应结果</returns>
+    private static async Task<string> SendXInputCommand(string operation, int deviceId, int serverPort)
+    {
+        if (operation != "disable" && operation != "enable")
+        {
+            Console.WriteLine("操作必须是'disable'或'enable' {0}", nameof(operation));
+            return "error";
+        }
+
+        try
+        {
+            // 创建TCP客户端并连接服务器
+            using var client = new TcpClient();
+            await client.ConnectAsync("127.0.0.1", serverPort);
+            Console.WriteLine($"已连接到服务器 localhost:{serverPort}");
+            // 获取网络流
+            await using var stream = client.GetStream();
+            // 构建命令字符串
+            var command = $"xinput {operation} {deviceId}";
+            var data = Encoding.UTF8.GetBytes(command);
+
+            // 发送命令到服务器
+            await stream.WriteAsync(data);
+            Console.WriteLine($"已发送命令: {command}");
+
+            // 接收服务器响应
+            var buffer = new byte[1024];
+            var bytesRead = await stream.ReadAsync(buffer);
+            return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+        }
+        catch (Exception ex)
+        {
+            return $"发送命令时出错: {ex.Message}";
         }
     }
 
@@ -233,43 +278,31 @@ public static class Program
         return true;
     }
 
-    private static string? _chosenDevice = "/dev/ttyUSB0";
-
-    // Path to the directory where ttyUSB devices are located
-    private static string _ttyUsbDirectory = "/dev/";
-
-    public static void Main(string[] args)
+    private static void HandleXinputRelated()
     {
-        InitSpecialKeyMap();
-        InitPassword();
-        LoadDevicesMapping();
-        // LoadBindingBluetoothDevices();
-
-
-        if (HandleInitCommandsWhenInit(args)) return;
-
         HasXInput = LinuxCommandChecker.IsCommandExists("xinput");
 
-        if (HasXInput)
+        if (!HasXInput) return;
+        const string toggleDevicesFile = ".toggle_devices";
+        var allxInputDevices = DeviceResolver.GetXInputDevices();
+        if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
         {
-            const string toggleDevicesFile = ".toggle_devices";
-            var allxInputDevices = DeviceResolver.GetXInputDevices();
-            if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
+            Console.WriteLine("Please choose the input device you want to toggle:");
+            var inputDevices = new List<string>();
+            var index = 0;
+            allxInputDevices.ForEach(kv =>
             {
-                Console.WriteLine("Please choose the input device you want to toggle:");
-                var inputDevices = new List<string>();
-                var index = 0;
-                allxInputDevices.ForEach(kv =>
-                {
-                    Console.WriteLine($"{index++}. {kv.Name}");
-                    inputDevices.Add(kv.Name);
-                });
-                var line = Console.ReadLine();
-                if (string.IsNullOrEmpty(line)) Console.WriteLine("Invalid input");
+                Console.WriteLine($"{index++}. {kv.Name}");
+                inputDevices.Add(kv.Name);
+            });
+            var line = Console.ReadLine();
+            if (string.IsNullOrEmpty(line)) Console.WriteLine("Invalid input");
 
-                if (line != null && line.Split(',').Any(s => !int.TryParse(s, out _)))
-                    Console.WriteLine("Invalid input");
+            if (line != null && line.Split(',').Any(s => !int.TryParse(s, out _)))
+                Console.WriteLine("Invalid input");
 
+            if (line != null)
+            {
                 var chosenIndexes = line.Split(',').Select(int.Parse).ToList();
 
                 var chosenList = new List<string>();
@@ -282,15 +315,28 @@ public static class Program
 
                 File.WriteAllLines(toggleDevicesFile, chosenList);
             }
-
-            if (allxInputDevices.Count != 0 && File.Exists(toggleDevicesFile))
-            {
-                var devices = File.ReadAllLines(toggleDevicesFile);
-                var ids = devices.Select(d => { return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1; })
-                    .Where(d => d != -1);
-                ToggleInputDeviceIds = ids.ToList();
-            }
         }
+
+        if (allxInputDevices.Count == 0 || !File.Exists(toggleDevicesFile)) return;
+        var devices = File.ReadAllLines(toggleDevicesFile);
+        var ids = devices.Select(d => { return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1; })
+            .Where(d => d != -1);
+        ToggleInputDeviceIds = ids.ToList();
+    }
+
+    private static string? _chosenDevice = "/dev/ttyUSB0";
+
+    // Path to the directory where ttyUSB devices are located
+    private static string _ttyUsbDirectory = "/dev/";
+
+    public static void Main(string[] args)
+    {
+        InitSpecialKeyMap();
+        InitPassword();
+        LoadDevicesMapping();
+
+        if (HandleInitCommandsWhenInit(args)) return;
+        HandleXinputRelated();
 
 
         StartArgs parsedArgs;
