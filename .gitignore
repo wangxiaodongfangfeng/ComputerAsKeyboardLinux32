@@ -10,3 +10,9 @@ ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.csproj.CoreCom
 ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.csproj.FileListAbsolute.txt
 ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.exe
 ComputerAskeyboardLinux32/obj/x86/Debug/ComputerAskeyboardLinux32.pdb
+KeyboardKeeper/obj/*
+KeyboardKeeper/bin/*
+KeyboardKeeperCient/obj/*
+KeyboardKeeperCient/bin/*
+ScreenSender/obj/*
+ScreenSender/bin/*

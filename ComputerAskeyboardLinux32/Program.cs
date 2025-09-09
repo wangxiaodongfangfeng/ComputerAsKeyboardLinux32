@@ -31,11 +31,10 @@ public static class Program
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
     private static List<string> MouseDevices { get; set; } = [];
-
-    private static List<string> BindingBluetoothDevices { get; set; } = [];
-
     private static int BaudRate { get; set; } = 9600;
     private static bool HasXInput { get; set; } = false;
+    private static bool RunAsService { get; set; } = false;
+    private static int XinputServicePort { get; set; } = 9869;
 
     private static List<int> ToggleInputDeviceIds { get; set; } = [];
 
@@ -173,13 +172,19 @@ public static class Program
     {
         if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
         var command = toggle ? "disable" : "enable";
-        try
+        if (!RunAsService)
         {
-            ToggleInputDeviceIds.ForEach(id => { LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}"); });
+            try
+            {
+                ToggleInputDeviceIds.ForEach(id => { LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}"); });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine(ex.Message);
         }
     }
 
@@ -302,34 +307,14 @@ public static class Program
             Background = parsedArgs.Background;
             UseQueue = parsedArgs.Queue;
             BaudRate = parsedArgs.BaudRate;
+            RunAsService = parsedArgs.RunAsService;
+            XinputServicePort = parsedArgs.XInputServicePort;
         }
         catch (ArgException ex)
         {
             WriteLogOnScreen(ex.Message);
             return;
         }
-
-        // if (parsedArgs.BluetoothPort)
-        // {
-        //     var bluetoothManager = new BluetoothManager();
-        //     var pairedDevices = BluetoothManager.GetPairedDevices();
-        //     BluetoothManager.LogInfo($"Start to connect:");
-        //     var index = 0;
-        //     pairedDevices.ForEach(p =>
-        //     {
-        //         var b = BluetoothManager.IsDeviceOnline(p.MacAddress!);
-        //         if (p.MacAddress != null && b)
-        //             _ = BluetoothManager2.ConnectRfcommPort(p.MacAddress, index++);
-        //     });
-        //     Console.WriteLine("Waiting for ten seconds for bluetooth connecting");
-        //     Task.Delay(TimeSpan.FromSeconds(10)).Wait(TimeSpan.FromSeconds(10));
-        //
-        //     _ = bluetoothManager.EnableBluetoothAutoConnect(pairedDevices
-        //         .Where(p => p.MacAddress != null)
-        //         .Select(p => p.MacAddress!)
-        //         .ToArray());
-        // }
-
 
         Console.TreatControlCAsInput = true;
 

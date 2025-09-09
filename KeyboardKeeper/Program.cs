@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.CommandLine;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -129,18 +130,38 @@ internal class XInputTcpServer
         }
     }
 
-    internal static async Task Main(string[] args)
+    internal static async Task<int> Main(string[] args)
     {
-        var server = new XInputTcpServer();
-        var cts = new CancellationTokenSource();
+        var rootCommand = new RootCommand("start service to toggle xinput device");
+        var parameter = new Option<string>("port", "-p");
+
+        rootCommand.SetAction(async (result, token) =>
+        {
+            var port = result.GetValue(parameter) ?? "9869";
+            var server = new XInputTcpServer();
+            var cts = new CancellationTokenSource();
+            try
+            {
+                await server.StartAsync(cts.Token);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"服务器错误: {ex.Message}");
+                await cts.CancelAsync();
+                return 1;
+            }
+        });
+
         try
         {
-            await server.StartAsync(cts.Token);
+            var parseResult = rootCommand.Parse(args);
+            return await parseResult.InvokeAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"服务器错误: {ex.Message}");
-            await cts.CancelAsync();
+            Console.WriteLine($"[子进程] 异常: {ex.Message}");
+            return 1;
         }
     }
 }

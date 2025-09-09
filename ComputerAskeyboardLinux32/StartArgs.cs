@@ -47,5 +47,13 @@ namespace ComputerAsKeyboardInterface
         [ArgDescription("running this program in background")]
         [DefaultValue(false)]
         public bool Background { get; set; }
+
+        [ArgDescription("specify the application running as a servie")]
+        [DefaultValue(false)]
+        public bool RunAsService { get; set; }
+
+        [ArgDescription("specify the port to use to communicate with xinput service")]
+        [DefaultValue(9869)]
+        public int XInputServicePort { get; set; }
     }
 }
