@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using ComputerAsKeyboardInterface.Bluetooth;
 using ComputerAsKeyboardInterface.FingerPrint;
@@ -39,6 +40,7 @@ public static class Program
     private static int XinputServicePort { get; set; } = 9869;
 
     private static List<int> ToggleInputDeviceIds { get; set; } = [];
+    private static readonly ManualResetEventSlim  ManualResetEventSlim = new(false);
 
     private static int ControlBytes
     {
@@ -398,12 +400,14 @@ public static class Program
         Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
 
         _ = SerialPortExtension.EnableAutoDetectAsync(parsedArgs.BluetoothPort);
-        while (true)
-        {
-            Console.ReadKey(intercept: true);
-            if (ExitInNext) break;
-        }
+        // while (true)
+        // {
+        //     //Console.ReadKey(intercept: true);
+        //     if (ExitInNext) break;
+        // }
 
+        ManualResetEventSlim.Wait();
+        
         _keyboard?.KeyUpAll();
     }
 
