@@ -293,7 +293,7 @@ public static class Program
         }
 
         const string toggleDevicesFile = ".toggle_devices";
-        var allxInputDevices = DeviceResolver.GetXInputDevices();
+        var allxInputDevices = DeviceResolver.GetXInputDevices(RunAsService);
         if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
         {
             Console.WriteLine("Please choose the input device you want to toggle:");
