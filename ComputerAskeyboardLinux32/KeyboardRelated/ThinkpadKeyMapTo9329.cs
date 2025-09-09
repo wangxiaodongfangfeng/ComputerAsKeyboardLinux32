@@ -91,7 +91,7 @@
                 { 56, 0xE2 }, //LeftAlt
                 { 57, 0x2C }, //Space
                 { 100, 0xE6 }, //RightAlt
-                { 127, 0x04 }, //Compose
+                { 127, 0x8F }, //Compose
                 { 97, 0xE4 }, //RightCtrl
                 { 103, 0x52 }, //Up
                 { 108, 0x51 }, //Down

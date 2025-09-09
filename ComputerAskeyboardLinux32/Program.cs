@@ -543,9 +543,11 @@ public static class Program
                 //fn+tab
                 case true when keyCode == EventCode.Tab:
                     SerialPortExtension.SwitchSerialPort();
+                    FnDown = false;
                     return;
                 case true when keyCode == EventCode.P:
                     HandleInputPassword();
+                    FnDown = false;
                     return;
             }
 
