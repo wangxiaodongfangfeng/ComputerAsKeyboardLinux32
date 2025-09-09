@@ -345,7 +345,6 @@ public static class Program
         LoadDevicesMapping();
 
         if (HandleInitCommandsWhenInit(args)) return;
-        HandleXinputRelated();
 
 
         StartArgs parsedArgs;
@@ -371,6 +370,7 @@ public static class Program
             return;
         }
 
+        HandleXinputRelated();
         Console.TreatControlCAsInput = true;
 
         if (!parsedArgs.Background)
