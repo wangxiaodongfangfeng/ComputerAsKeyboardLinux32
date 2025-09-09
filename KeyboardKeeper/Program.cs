@@ -134,7 +134,7 @@ internal class XInputTcpServer
     {
         var rootCommand = new RootCommand("start service to toggle xinput device");
         var parameter = new Option<string>("port", "-p");
-
+        rootCommand.Add(parameter);
         rootCommand.SetAction(async (result, token) =>
         {
             var port = result.GetValue(parameter) ?? "9869";
