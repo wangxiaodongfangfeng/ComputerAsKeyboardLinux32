@@ -40,7 +40,7 @@ public static class Program
     private static int XinputServicePort { get; set; } = 9869;
 
     private static List<int> ToggleInputDeviceIds { get; set; } = [];
-    private static readonly ManualResetEventSlim  ManualResetEventSlim = new(false);
+    private static readonly ManualResetEventSlim ManualResetEventSlim = new(false);
 
     private static int ControlBytes
     {
@@ -282,9 +282,16 @@ public static class Program
 
     private static void HandleXinputRelated()
     {
-        HasXInput = LinuxCommandChecker.IsCommandExists("xinput");
+        if (!RunAsService)
+        {
+            HasXInput = LinuxCommandChecker.IsCommandExists("xinput");
+            if (!HasXInput) return;
+        }
+        else
+        {
+            HasXInput = true;
+        }
 
-        if (!HasXInput) return;
         const string toggleDevicesFile = ".toggle_devices";
         var allxInputDevices = DeviceResolver.GetXInputDevices();
         if (allxInputDevices.Count != 0 && !File.Exists(toggleDevicesFile))
@@ -407,7 +414,7 @@ public static class Program
         // }
 
         ManualResetEventSlim.Wait();
-        
+
         _keyboard?.KeyUpAll();
     }
 
