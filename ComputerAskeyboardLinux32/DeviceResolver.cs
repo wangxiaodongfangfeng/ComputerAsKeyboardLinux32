@@ -83,14 +83,22 @@ namespace ComputerAsKeyboardInterface
         /// 执行xinput list命令并解析结果
         /// </summary>
         /// <returns>设备信息列表</returns>
-        public static List<XInputDevice> GetXInputDevices()
+        public static List<XInputDevice> GetXInputDevices(bool? noInputServer = null)
         {
             var devices = new List<XInputDevice>();
 
             try
             {
                 // 执行xinput list命令
-                var result = LinuxCommandHelper.ExecuteCommand("xinput list");
+                var result =
+                    noInputServer.HasValue
+                    && noInputServer.Value && File.Exists(".xinputlistresult")
+                        ? new CommandResult()
+                        {
+                            Success = true,
+                            Output = File.ReadAllText(".xinputlistresult"),
+                        }
+                        : LinuxCommandHelper.ExecuteCommand("xinput list");
 
                 if (!result.Success)
                 {

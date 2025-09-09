@@ -89,17 +89,19 @@ internal class XInputTcpServer
         }
 
         var operation = parts[1];
-        if (operation != "disable" && operation != "enable")
+        if (operation != "disable" && operation != "enable" && operation != "list")
         {
-            return "无效操作。请使用 disable 或 enable";
+            return "无效操作。请使用 disable 或 enable 或 list";
         }
 
-        return !int.TryParse(parts[2], out var deviceId)
-            ? "无效的设备ID。请提供整数ID"
-            : ExecuteXInputCommand(operation, deviceId); // 执行xinput命令
+        return operation == "list"
+            ? ExecuteXInputCommand(operation)
+            : !int.TryParse(parts[2], out var deviceId)
+                ? "无效的设备ID。请提供整数ID"
+                : ExecuteXInputCommand(operation, deviceId); // 执行xinput命令
     }
 
-    private static string ExecuteXInputCommand(string operation, int deviceId)
+    private static string ExecuteXInputCommand(string operation, int? deviceId = null)
     {
         try
         {
@@ -107,7 +109,7 @@ internal class XInputTcpServer
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "xinput",
-                Arguments = $"{operation} {deviceId}",
+                Arguments = deviceId == null ? $"{operation}" : $"{operation} {deviceId}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -121,7 +123,7 @@ internal class XInputTcpServer
             process?.WaitForExit();
 
             return process is { ExitCode: 0 }
-                ? $"成功{operation}设备 {deviceId}"
+                ? operation == "list" ? output! : $"成功{operation}设备 {deviceId}"
                 : $"执行命令失败 (错误代码: {process!.ExitCode}): {error}";
         }
         catch (Exception ex)
