@@ -33,7 +33,7 @@ public static class Program
     private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
-    private static List<string>? InputDevices { get; set; } = [];
+    private static List<string> InputDevices { get; set; } = [];
     private static List<string> MouseDevices { get; set; } = [];
     private static int BaudRate { get; set; } = 9600;
     private static bool HasXInput { get; set; } = false;
@@ -387,7 +387,7 @@ public static class Program
             RunAsService = r.GetValue<bool>("--service");
             XinputServicePort = r.GetValue<int>("--xinput-port");
             BluetoothEnabled = r.GetValue<bool>("--bluetooth-port");
-            MainFuncton(args);
+            MainFunction(args);
 
             return Task.FromResult(0);
         });
@@ -396,7 +396,7 @@ public static class Program
         result.Invoke();
     }
 
-    public static void MainFuncton(string[] args)
+    public static void MainFunction(string[] args)
     {
         HandleXinputRelated();
 
@@ -413,17 +413,16 @@ public static class Program
         SerialPortExtension.BaudRate = BaudRate;
         _chosenDevice = AutoScanAvailablePortDevice();
         WriteLogOnScreen($"device is {_chosenDevice}");
-        if (InputDevices != null)
-        {
-            using var aggHandler = new AggregateInputReader(InputDevices);
-            _keyboard = GenerateKeyboard();
-            WithSerialPortChangeDetection();
 
-            aggHandler.EnableMainFunction();
-            aggHandler.EnableKeyboardSwitch();
-            aggHandler.EnableMuteSwitch();
-            aggHandler.EnableMenuFunction();
-        }
+        using var aggHandler = new AggregateInputReader(InputDevices);
+        _keyboard = GenerateKeyboard();
+        WithSerialPortChangeDetection();
+
+        aggHandler.EnableMainFunction();
+        aggHandler.EnableKeyboardSwitch();
+        aggHandler.EnableMuteSwitch();
+        aggHandler.EnableMenuFunction();
+
 
         EnableMouseTrack(isMacOs: _switchAlt);
 
@@ -500,7 +499,29 @@ public static class Program
 
     private static string HandleCommandFromClient(string command)
     {
-        return string.Empty;
+        switch (command)
+        {
+            case "mute":
+                _mute = true;
+                break;
+            case "unmute":
+                _mute = false;
+                break;
+            case "list":
+                return string.Join("\r\n",
+                    SerialPortExtension.AllAvailablePorts
+                        .Keys
+                        .Select(p => SerialPortExtension.CurrentSerialPort?.PortName == p ? $"*{p}" : p)
+                        .ToArray());
+            case "switch":
+                SerialPortExtension.SwitchSerialPort();
+                break;
+            case "password":
+                HandleInputPassword();
+                break;
+        }
+
+        return "success";
     }
 
     private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)
