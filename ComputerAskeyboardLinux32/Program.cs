@@ -530,27 +530,8 @@ public static class Program
     private static void SwitchKeySlot(EventCode keyCode, bool push, ThinkpadKeyMapTo9329 thinkpadKey)
     {
         if (!thinkpadKey.KeyMaps.TryGetValue((int)keyCode, out var keyByte)) return;
-        if (keyByte == 0x8f)
-        {
-            FnDown = push;
-            return;
-        }
-
         if (push)
         {
-            switch (FnDown)
-            {
-                //fn+tab
-                case true when keyCode == EventCode.Tab:
-                    SerialPortExtension.SwitchSerialPort();
-                    FnDown = false;
-                    return;
-                case true when keyCode == EventCode.P:
-                    HandleInputPassword();
-                    FnDown = false;
-                    return;
-            }
-
             //push
             //if we don't have a duplicated key,find a new slot
             if (!KeySlots.Contains(keyByte))
@@ -569,7 +550,7 @@ public static class Program
         SendCharKeyDown();
     }
 
-    private static bool IsFnCompositeKey(this byte[] keySlots)
+    private static bool IsFnCompositeKey()
     {
         return false;
     }

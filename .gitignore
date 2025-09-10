@@ -16,3 +16,5 @@ KeyboardKeeperCient/obj/*
 KeyboardKeeperCient/bin/*
 ScreenSender/obj/*
 ScreenSender/bin/*
+FordKeyboardPanel/bin/**
+FordKeyboardPanel/obj/**

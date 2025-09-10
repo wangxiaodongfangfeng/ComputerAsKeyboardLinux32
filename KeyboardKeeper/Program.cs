@@ -108,7 +108,6 @@ internal class XInputTcpServer
             return string.Empty;
         }
 
-
         // 验证命令格式
         if (parts.Length != 3 || !parts[0].Equals("xinput", StringComparison.OrdinalIgnoreCase))
         {
