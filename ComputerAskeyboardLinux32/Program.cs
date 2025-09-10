@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using System.CommandLine;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -29,7 +31,6 @@ public static class Program
     private static readonly Dictionary<EventCode, byte> SpecialKeyMap = new();
 
     private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
-    private static bool _bluetooth = false;
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
     private static List<string>? InputDevices { get; set; } = [];
@@ -38,6 +39,7 @@ public static class Program
     private static bool HasXInput { get; set; } = false;
     private static bool RunAsService { get; set; } = false;
     private static int XinputServicePort { get; set; } = 9869;
+    private static bool BluetoothEnabled { get; set; } = false;
 
     private static List<int> ToggleInputDeviceIds { get; set; } = [];
     private static readonly ManualResetEventSlim ManualResetEventSlim = new(false);
@@ -96,7 +98,7 @@ public static class Program
         try
         {
             // Filter the list to only include ttyUSB devices
-            var ttyUsbDevices = Directory.GetFiles(_ttyUsbDirectory)
+            var ttyUsbDevices = Directory.GetFiles(TtyUsbDirectory)
                 .Where(device => device.StartsWith("/dev/ttyUSB", StringComparison.Ordinal) ||
                                  device.StartsWith("/dev/rfcomm", StringComparison.Ordinal)).ToList();
 
@@ -123,7 +125,7 @@ public static class Program
 
     private static void WithSerialPortChangeDetection()
     {
-        var watcher = new FileSystemWatcher(_ttyUsbDirectory)
+        var watcher = new FileSystemWatcher(TtyUsbDirectory)
         {
             NotifyFilter = NotifyFilters.Attributes | NotifyFilters.CreationTime |
                            NotifyFilters.DirectoryName
@@ -277,6 +279,8 @@ public static class Program
 
         InputDevices = chosenList.Select(c => DeviceResolver.InputDevicesMapping[c]).ToList();
 
+        HandleXinputRelated();
+
         return true;
     }
 
@@ -336,91 +340,167 @@ public static class Program
     private static string? _chosenDevice = "/dev/ttyUSB0";
 
     // Path to the directory where ttyUSB devices are located
-    private static string _ttyUsbDirectory = "/dev/";
+    private const string TtyUsbDirectory = "/dev/";
 
     internal static void Main(string[] args)
     {
-        MainFuncton(args);
+        Console.TreatControlCAsInput = true;
+        Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
+        ParseArgsAndRun(args);
     }
 
-    public static void MainFuncton(string[] args)
+    private static void ParseArgsAndRun(string[] args)
     {
         InitSpecialKeyMap();
         InitPassword();
         LoadDevicesMapping();
-
-        if (HandleInitCommandsWhenInit(args)) return;
-
-
-        StartArgs parsedArgs;
-
-        try
+        var rootCommand = new RootCommand("ford-keyboard is a program to fake thinkpad as a keyboard")
         {
-            parsedArgs = Args.Parse<StartArgs>(args);
-            _chosenDevice = parsedArgs.Device;
-            _ttyUsbDirectory = parsedArgs.ScanPath ?? "/dev/";
-            _mute = !parsedArgs.Verbose;
-            _switchAlt = parsedArgs.MacOs;
-            _bluetooth = parsedArgs.Bluetooth;
-            _fingerPrint = parsedArgs.Fprint;
-            Background = parsedArgs.Background;
-            UseQueue = parsedArgs.Queue;
-            BaudRate = parsedArgs.BaudRate;
-            RunAsService = parsedArgs.RunAsService;
-            XinputServicePort = parsedArgs.XInputServicePort;
-        }
-        catch (ArgException ex)
-        {
-            WriteLogOnScreen(ex.Message);
-            return;
-        }
+            new Option<bool>("--macos", "-m") { DefaultValueFactory = (r) => false, Required = false },
+            new Option<bool>("--fprint", "-f") { DefaultValueFactory = (r) => false, Required = false },
+            new Option<bool>("--mute", "-mt") { DefaultValueFactory = (r) => false, Required = false },
+            new Option<bool>("--queue", "-q") { DefaultValueFactory = (r) => false, Required = false },
+            new Option<int>("--baud-rate", "-br") { DefaultValueFactory = (r) => 9600, Required = false },
+            new Option<bool>("--background", "-b")
+                { DefaultValueFactory = (r) => false, Required = false },
+            new Option<bool>("--service", "-s") { DefaultValueFactory = (r) => false, Required = false },
+            new Option<int>("--xinput-port", "-x") { DefaultValueFactory = (r) => 9869, Required = false },
+            new Option<bool>("--bluetooth-port", "-bp") { DefaultValueFactory = (r) => false, Required = false }
+        };
 
+        var initCommand = new Command("init");
+        initCommand.SetAction((r, t) =>
+        {
+            HandleInitCommandsWhenInit(args);
+            return Task.FromResult(0);
+        });
+        rootCommand.Add(initCommand);
+
+        rootCommand.SetAction((r, t) =>
+        {
+            _mute = r.GetValue<bool>("--mute");
+            _switchAlt = r.GetValue<bool>("--macos");
+            _fingerPrint = r.GetValue<bool>("--fprint");
+            Background = r.GetValue<bool>("--background");
+            BaudRate = r.GetValue<int>("--baud-rate");
+            UseQueue = r.GetValue<bool>("--queue");
+            RunAsService = r.GetValue<bool>("--service");
+            XinputServicePort = r.GetValue<int>("--xinput-port");
+            BluetoothEnabled = r.GetValue<bool>("--bluetooth-port");
+            MainFuncton(args);
+
+            return Task.FromResult(0);
+        });
+
+        var result = rootCommand.Parse(args);
+        result.Invoke();
+    }
+
+    public static void MainFuncton(string[] args)
+    {
         HandleXinputRelated();
-        Console.TreatControlCAsInput = true;
 
-        if (!parsedArgs.Background)
+        if (!Background)
         {
             ThinkpadKeyLayout.WriteKeyboardOnScreen();
-            using var aggHandler1 = new AggregateInputReader(InputDevices);
-            aggHandler1.WithKeyTogglingOnScreen();
+            if (InputDevices != null)
+            {
+                using var aggHandler1 = new AggregateInputReader(InputDevices);
+                aggHandler1.WithKeyTogglingOnScreen();
+            }
         }
 
-        SerialPortExtension.BaudRate = parsedArgs.BaudRate;
-
-        if (parsedArgs.AutoScan)
-        {
-            _chosenDevice = AutoScanAvailablePortDevice();
-            if (_chosenDevice == null) return;
-        }
-        else
-        {
-            SerialPortExtension.AddSerialPort(_chosenDevice);
-        }
-
-        if (!File.Exists(_chosenDevice)) return;
+        SerialPortExtension.BaudRate = BaudRate;
+        _chosenDevice = AutoScanAvailablePortDevice();
         WriteLogOnScreen($"device is {_chosenDevice}");
-        using var aggHandler = new AggregateInputReader(InputDevices);
-        _keyboard = GenerateKeyboard(_bluetooth, _chosenDevice);
-        WithSerialPortChangeDetection();
+        if (InputDevices != null)
+        {
+            using var aggHandler = new AggregateInputReader(InputDevices);
+            _keyboard = GenerateKeyboard();
+            WithSerialPortChangeDetection();
 
-        aggHandler.EnableMainFunction();
-        aggHandler.EnableKeyboardSwitch();
-        aggHandler.EnableMuteSwitch();
-        aggHandler.EnableMenuFunction();
-        EnableMouseTrack(isMacOs: parsedArgs.MacOs);
+            aggHandler.EnableMainFunction();
+            aggHandler.EnableKeyboardSwitch();
+            aggHandler.EnableMuteSwitch();
+            aggHandler.EnableMenuFunction();
+        }
 
-        Console.CancelKeyPress += (sender, eventArgs) => { _keyboard?.KeyUpAll(); };
+        EnableMouseTrack(isMacOs: _switchAlt);
 
-        _ = SerialPortExtension.EnableAutoDetectAsync(parsedArgs.BluetoothPort);
-        // while (true)
-        // {
-        //     //Console.ReadKey(intercept: true);
-        //     if (ExitInNext) break;
-        // }
 
+        _ = SerialPortExtension.EnableAutoDetectAsync(BluetoothEnabled);
+        _ = EnableReactiveServerAsync(CancellationToken.None);
         ManualResetEventSlim.Wait();
-
         _keyboard?.KeyUpAll();
+    }
+
+    private static async Task EnableReactiveServerAsync(CancellationToken token)
+    {
+        const int port = 9988;
+        var server = new TcpListener(IPAddress.Any, port);
+        server.Start();
+        Console.WriteLine($"keyboard reactive port opened，listen on {port}...");
+        Console.WriteLine("waiting for connection...");
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                // 异步等待客户端连接
+                var client = await server.AcceptTcpClientAsync(token);
+                Console.WriteLine("客户端已连接");
+                _ = Task.Run(() => HandleClient(client), token);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"接受客户端连接时出错: {ex.Message}");
+            }
+
+            await Task.Delay(300, token);
+        }
+    }
+
+    private static void HandleClient(TcpClient client)
+    {
+        try
+        {
+            using var stream = client.GetStream();
+            var buffer = new byte[1024];
+            int bytesRead;
+
+            // 读取客户端发送的命令
+            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+            {
+                var command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+                Console.WriteLine($"收到命令: {command}");
+
+                // 处理命令并获取结果
+                var result = HandleCommandFromClient(command);
+
+                // 发送响应给客户端
+                var response = Encoding.UTF8.GetBytes(result);
+                stream.Write(response, 0, response.Length);
+
+                // 如果是退出命令，关闭连接
+                if (command.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"处理客户端时出错: {ex.Message}");
+        }
+        finally
+        {
+            client.Close();
+            Console.WriteLine("客户端已断开连接");
+        }
+    }
+
+    private static string HandleCommandFromClient(string command)
+    {
+        return string.Empty;
     }
 
     private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)
@@ -457,9 +537,6 @@ public static class Program
         {
             case EventCode.F1 when ControlBytes == 0x01:
                 HandleInputPassword();
-                return true;
-            case EventCode.F10 when ControlBytes == 0x01:
-                HandleRefreshKeyboard();
                 return true;
             case EventCode.Num1 when ControlBytes == 0x03:
                 SerialPortExtension.SwitchSerialPort(0);
@@ -781,25 +858,9 @@ public static class Program
         }
     }
 
-    private static IKeyboard GenerateKeyboard(bool bluetooth, string port)
+    private static IKeyboard GenerateKeyboard()
     {
-        return bluetooth
-            ? new Btk05(port, baudRate: BaudRate)
-            : new Ch9329();
-    }
-
-    /// <summary>
-    /// RefreshKeyboard
-    /// Sometime when the computer wake up from sleep
-    /// bluetooth will be disconnected.
-    /// we should reconnect the bluetooth by reopen the port
-    /// </summary>
-    private static void HandleRefreshKeyboard()
-    {
-        _keyboard?.Dispose();
-        if (_chosenDevice == null) return;
-        _keyboard = GenerateKeyboard(_bluetooth, _chosenDevice);
-        WriteLogOnScreen($"Refreshed the keyboard with {_bluetooth},{_chosenDevice}");
+        return new Ch9329();
     }
 
     private static void HandleInputPassword()

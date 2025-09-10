@@ -83,9 +83,9 @@ namespace FordKeyboardPanel
 
     public class BoolToEnableDisableConverter : IValueConverter
     {
-        public static BoolToEnableDisableConverter Instance = new BoolToEnableDisableConverter();
+        public static BoolToEnableDisableConverter Instance = new();
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool isEnabled)
             {
@@ -95,7 +95,7 @@ namespace FordKeyboardPanel
             return "Enable"; // 默认值
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotSupportedException();
         }
