@@ -500,7 +500,7 @@ public static class Program
 
     private static string HandleCommandFromClient(string command)
     {
-        return string.Empty;
+        return command;
     }
 
     private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)
