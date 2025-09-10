@@ -338,7 +338,12 @@ public static class Program
     // Path to the directory where ttyUSB devices are located
     private static string _ttyUsbDirectory = "/dev/";
 
-    public static void Main(string[] args)
+    internal static void Main(string[] args)
+    {
+        MainFuncton(args);
+    }
+
+    public static void MainFuncton(string[] args)
     {
         InitSpecialKeyMap();
         InitPassword();

@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyboardKeeper", "KeyboardK
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyboardKeeperCient", "KeyboardKeeperCient\KeyboardKeeperCient.csproj", "{172860CA-7D91-480A-BA93-806F10E77DCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FordKeyboardPanel", "FordKeyboardPanel\FordKeyboardPanel.csproj", "{2CBFE8D3-34BF-439D-9FE6-7C4BBCDE6F35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForKeyboardServer", "ForKeyboardServer\ForKeyboardServer.csproj", "{463F1B77-39B8-41AA-973B-4FC75B416860}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -31,5 +35,13 @@ Global
 		{172860CA-7D91-480A-BA93-806F10E77DCD}.Debug|x86.Build.0 = Debug|Any CPU
 		{172860CA-7D91-480A-BA93-806F10E77DCD}.Release|x86.ActiveCfg = Release|Any CPU
 		{172860CA-7D91-480A-BA93-806F10E77DCD}.Release|x86.Build.0 = Release|Any CPU
+		{2CBFE8D3-34BF-439D-9FE6-7C4BBCDE6F35}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2CBFE8D3-34BF-439D-9FE6-7C4BBCDE6F35}.Debug|x86.Build.0 = Debug|Any CPU
+		{2CBFE8D3-34BF-439D-9FE6-7C4BBCDE6F35}.Release|x86.ActiveCfg = Release|Any CPU
+		{2CBFE8D3-34BF-439D-9FE6-7C4BBCDE6F35}.Release|x86.Build.0 = Release|Any CPU
+		{463F1B77-39B8-41AA-973B-4FC75B416860}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{463F1B77-39B8-41AA-973B-4FC75B416860}.Debug|x86.Build.0 = Debug|Any CPU
+		{463F1B77-39B8-41AA-973B-4FC75B416860}.Release|x86.ActiveCfg = Release|Any CPU
+		{463F1B77-39B8-41AA-973B-4FC75B416860}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

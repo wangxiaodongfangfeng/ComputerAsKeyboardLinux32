@@ -18,3 +18,4 @@ ScreenSender/obj/*
 ScreenSender/bin/*
 FordKeyboardPanel/bin/**
 FordKeyboardPanel/obj/**
+ForKeyboardServer/obj/**
