@@ -349,7 +349,7 @@ public static class Program
         ParseArgsAndRun(args);
     }
 
-    private static void ParseArgsAndRun(string[] args)
+    public static void ParseArgsAndRun(string[] args)
     {
         InitSpecialKeyMap();
         InitPassword();
