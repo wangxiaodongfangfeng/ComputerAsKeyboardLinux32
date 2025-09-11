@@ -349,7 +349,7 @@ public static class Program
         ParseArgsAndRun(args);
     }
 
-    private static void ParseArgsAndRun(string[] args)
+    public static void ParseArgsAndRun(string[] args)
     {
         InitSpecialKeyMap();
         InitPassword();
@@ -387,7 +387,7 @@ public static class Program
             RunAsService = r.GetValue<bool>("--service");
             XinputServicePort = r.GetValue<int>("--xinput-port");
             BluetoothEnabled = r.GetValue<bool>("--bluetooth-port");
-            MainFuncton(args);
+            MainFunction(args);
 
             return Task.FromResult(0);
         });
@@ -396,14 +396,13 @@ public static class Program
         result.Invoke();
     }
 
-    public static void MainFuncton(string[] args)
+    private static void MainFunction(string[] args)
     {
         HandleXinputRelated();
 
         if (!Background)
         {
             ThinkpadKeyLayout.WriteKeyboardOnScreen();
-            if (InputDevices != null)
             {
                 using var aggHandler1 = new AggregateInputReader(InputDevices);
                 aggHandler1.WithKeyTogglingOnScreen();
@@ -413,23 +412,25 @@ public static class Program
         SerialPortExtension.BaudRate = BaudRate;
         _chosenDevice = AutoScanAvailablePortDevice();
         WriteLogOnScreen($"device is {_chosenDevice}");
-        if (InputDevices != null)
-        {
-            using var aggHandler = new AggregateInputReader(InputDevices);
-            _keyboard = GenerateKeyboard();
-            WithSerialPortChangeDetection();
+        using var aggHandler = new AggregateInputReader(InputDevices);
+        _keyboard = GenerateKeyboard();
 
-            aggHandler.EnableMainFunction();
-            aggHandler.EnableKeyboardSwitch();
-            aggHandler.EnableMuteSwitch();
-            aggHandler.EnableMenuFunction();
-        }
+        WithSerialPortChangeDetection();
+
+        aggHandler.EnableMainFunction();
+        aggHandler.EnableKeyboardSwitch();
+        aggHandler.EnableMuteSwitch();
+        aggHandler.EnableMenuFunction();
 
         EnableMouseTrack(isMacOs: _switchAlt);
 
-
+        _ = BluetoothAutoConnector.MainBluetoothAutoConnect([]);
         _ = SerialPortExtension.EnableAutoDetectAsync(BluetoothEnabled);
-        _ = EnableReactiveServerAsync(CancellationToken.None);
+        if (RunAsService || Background)
+        {
+            _ = EnableReactiveServerAsync(CancellationToken.None);
+        }
+
         ManualResetEventSlim.Wait();
         _keyboard?.KeyUpAll();
     }
@@ -498,9 +499,12 @@ public static class Program
         }
     }
 
-    private static string HandleCommandFromClient(string command)
+    private static string HandleCommandFromClient(string commandTokens)
     {
-        switch (command)
+        var tokens = commandTokens.Split(' ');
+
+
+        switch (tokens[0])
         {
             case "mute":
                 _mute = true;
@@ -520,9 +524,37 @@ public static class Program
             case "password":
                 HandleInputPassword();
                 break;
+            case "set-baud-rate":
+                if (tokens.Length != 3) break;
+                if (!tokens[1].Contains("/dev/")) tokens[1] = $"/dev/{tokens[1]}";
+                if (!File.Exists(tokens[1]))
+                    return "Device does not exist\r\n";
+                if (int.TryParse(tokens[2], out var baudRate))
+                {
+                    if (SerialPortExtension.AllAvailablePorts.TryGetValue(tokens[1], out var value))
+                        value.BaudRate = baudRate;
+                }
+
+                break;
+            case "auto-connect":
+                if (tokens.Length != 2) break;
+                switch (tokens[1])
+                {
+                    case "on":
+                        BluetoothAutoConnector.AutoConnectEvent.Set();
+                        break;
+                    case "off":
+                        BluetoothAutoConnector.AutoConnectEvent.Reset();
+                        break;
+                    default:
+                        return "error parameter";
+                        break;
+                }
+
+                break;
         }
 
-        return "success";
+        return "success\r\n";
     }
 
     private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)

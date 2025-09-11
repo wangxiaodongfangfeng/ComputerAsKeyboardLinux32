@@ -23,7 +23,7 @@ public static class SerialPortExtension
             {
                 if (!(f.Contains("ttyUSB") || f.Contains("rfcomm"))) return;
                 if (AllAvailablePorts.ContainsKey(f)) return;
-                Console.WriteLine($"serialport added {f}");
+                Console.WriteLine($"serial-port added {f}");
                 AddSerialPort(f);
             });
             var needRemoved = new List<string>();
@@ -73,7 +73,7 @@ public static class SerialPortExtension
             if (port.IsOpen) return;
         }
 
-        port = new SerialPort(portName, BaudRate);
+        port = new SerialPort(portName, portName.Contains("ttyUSB") ? 9600 : BaudRate);
         port.Open();
         AllAvailablePorts.Add(portName, port);
         CurrentSerialPort ??= port;

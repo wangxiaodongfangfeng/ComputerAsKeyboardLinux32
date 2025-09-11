@@ -8,7 +8,7 @@ using Object = Atk.Object;
 namespace ComputerAsKeyboardInterface.Bluetooth
 {
     // 蓝牙设备信息类
-    public class BluetoothDevice
+    public partial class BluetoothDevice
     {
         public string? Name { get; set; }
         public string? MacAddress { get; init; }
