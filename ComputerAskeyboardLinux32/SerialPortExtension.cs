@@ -6,7 +6,7 @@ namespace ComputerAsKeyboardInterface;
 
 public static class SerialPortExtension
 {
-    private static Dictionary<string, SerialPort> AllAvailablePorts { get; set; } = new();
+    public static Dictionary<string, SerialPort> AllAvailablePorts { get; set; } = new();
 
     public static SerialPort? CurrentSerialPort { get; set; }
 

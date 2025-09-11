@@ -28,6 +28,6 @@ app.MapRazorComponents<App>()
 
 var arguments = Environment.GetCommandLineArgs();
 
-_ = Task.Run(() => { ComputerAsKeyboardInterface.Program.MainFuncton(arguments); });
+_ = Task.Run(() => { ComputerAsKeyboardInterface.Program.MainFunction(arguments); });
 
 app.Run();

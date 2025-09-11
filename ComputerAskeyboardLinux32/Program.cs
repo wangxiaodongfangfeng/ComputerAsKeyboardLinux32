@@ -33,7 +33,7 @@ public static class Program
     private static readonly Dictionary<EventCode, bool> SpecialKeyStatus = new();
     private static readonly byte[] KeySlots = new byte[6];
     public static bool UseQueue { get; private set; } = false;
-    private static List<string>? InputDevices { get; set; } = [];
+    private static List<string> InputDevices { get; set; } = [];
     private static List<string> MouseDevices { get; set; } = [];
     private static int BaudRate { get; set; } = 9600;
     private static bool HasXInput { get; set; } = false;
@@ -500,7 +500,29 @@ public static class Program
 
     private static string HandleCommandFromClient(string command)
     {
-        return command;
+        switch (command)
+        {
+            case "mute":
+                _mute = true;
+                break;
+            case "unmute":
+                _mute = false;
+                break;
+            case "list":
+                return string.Join("\r\n",
+                    SerialPortExtension.AllAvailablePorts
+                        .Keys
+                        .Select(p => SerialPortExtension.CurrentSerialPort?.PortName == p ? $"*{p}" : p)
+                        .ToArray());
+            case "switch":
+                SerialPortExtension.SwitchSerialPort();
+                break;
+            case "password":
+                HandleInputPassword();
+                break;
+        }
+
+        return "success";
     }
 
     private static bool InterceptSpecialKey(KeyPressEvent e, bool isMacOs)
