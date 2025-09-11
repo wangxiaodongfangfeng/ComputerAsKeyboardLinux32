@@ -5,7 +5,7 @@ Requires=autoconnect.service
 
 [Service]
 WorkingDirectory=/home/ford/ford-keyboard  
-ExecStart=/home/ford/publish/ford-keyboard -V false -Ba 115200 -BluetoothPort true -background true  
+ExecStart=/home/ford/ford-keyboard/ford-keyboard -mt true -br 115200 -bp true -b true -s true -x 9869  
 Restart=on-failure               
 RestartSec=5            
 

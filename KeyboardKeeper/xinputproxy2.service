@@ -1,0 +1,18 @@
+[Unit]
+Description=executexinputservices
+After=bluetooth.service display-manager.service
+Requires=bluetooth.service display-manager.service
+
+[Service]
+User=ford
+Group=ford
+
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/your_username/.Xauthority"
+ExecStart=/home/ford/ford-keyboard/xinputproxy -p 9869
+
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical.target
