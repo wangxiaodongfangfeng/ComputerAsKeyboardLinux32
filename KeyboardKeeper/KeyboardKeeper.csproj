@@ -6,10 +6,22 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>xinputproxy</AssemblyName>
+        <Configurations>Debug;Release;Debug|AnyCPU;Release|x64</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <OutputPath>../ford-keyboard</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="System.CommandLine" Version="2.0.0-beta7.25380.108" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="xinputproxy.service">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

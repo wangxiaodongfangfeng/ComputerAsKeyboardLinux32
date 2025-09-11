@@ -278,6 +278,15 @@ namespace TcpFileTransferClient
 
         var diffOnly = result.GetValue(diffOnlyOption);
 
+        metas.ForEach(m =>
+        {
+          m.DestFilePath = m.DestFilePath?.Replace("\\", "/");
+        });
+        metasLocal.ForEach(m =>
+        {
+          m.DestFilePath = m.DestFilePath?.Replace("\\", "/");
+        });
+        
         var difference = FileHelper.CompareFilesOfTwoRepo(metas, metasLocal, diffOnly);
         difference.ForEach(Console.WriteLine);
         return 0;

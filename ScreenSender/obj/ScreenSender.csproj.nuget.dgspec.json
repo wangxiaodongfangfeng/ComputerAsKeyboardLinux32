@@ -1,33 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "E:\\sss\\Softwares\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj": {}
+    "C:\\Users\\Administrator\\newke\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj": {}
   },
   "projects": {
-    "E:\\sss\\Softwares\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj": {
+    "C:\\Users\\Administrator\\newke\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\sss\\Softwares\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj",
+        "projectUniqueName": "C:\\Users\\Administrator\\newke\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj",
         "projectName": "ScreenSender",
-        "projectPath": "E:\\sss\\Softwares\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj",
+        "projectPath": "C:\\Users\\Administrator\\newke\\ComputerAsKeyboardLinux32\\ScreenSender\\ScreenSender.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "E:\\sss\\Softwares\\ComputerAsKeyboardLinux32\\ScreenSender\\obj\\",
+        "outputPath": "C:\\Users\\Administrator\\newke\\ComputerAsKeyboardLinux32\\ScreenSender\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files (x86)\\Progress\\Telerik UI for WPF 2024 Q1\\Binaries.NoXaml\\NetCore\\NuGet": {},
-          "C:\\Program Files (x86)\\Progress\\ToolboxNuGetPackages": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
