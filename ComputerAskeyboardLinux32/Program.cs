@@ -424,7 +424,10 @@ public static class Program
 
         EnableMouseTrack(isMacOs: _switchAlt);
 
-        _ = BluetoothAutoConnector.MainBluetoothAutoConnect([]);
+        if (BluetoothEnabled)
+        {
+            _ = BluetoothAutoConnector.MainBluetoothAutoConnect([]);
+        }
         _ = SerialPortExtension.EnableAutoDetectAsync(BluetoothEnabled);
         if (RunAsService || Background)
         {

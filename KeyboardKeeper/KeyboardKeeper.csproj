@@ -24,4 +24,10 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="xinputproxy2.service">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
