@@ -14,8 +14,8 @@ KeyboardKeeper/obj/*
 KeyboardKeeper/bin/*
 KeyboardKeeperCient/obj/*
 KeyboardKeeperCient/bin/*
-ScreenSender/obj/*
-ScreenSender/bin/*
+ScreenSender/obj/**
+ScreenSender/bin/**
 FordKeyboardPanel/bin/**
 FordKeyboardPanel/obj/**
 ForKeyboardServer/obj/**
