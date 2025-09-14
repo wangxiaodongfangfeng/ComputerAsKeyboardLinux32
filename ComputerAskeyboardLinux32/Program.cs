@@ -718,11 +718,11 @@ public static class Program
     {
         try
         {
-            if (!File.Exists("/usr/local/bin/safe-beep")) return;
+            if (!File.Exists("/home/ford/ford-keyboard/alert.wav")) return;
             var startInfo = new ProcessStartInfo
             {
-                FileName = "/usr/local/bin/safe-beep",
-                Arguments = "", // 传递beep的参数
+                FileName = "aplay",
+                Arguments = "/home/ford/ford-keyboard/alert.wav", // 传递beep的参数
                 UseShellExecute = false,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -753,17 +753,28 @@ public static class Program
             {
                 if (e is { Code: EventCode.E })
                 {
-                    if (LinuxCommandChecker.IsCommandExists("beep"))
-                    {
-                        Beep();
-                        Task.Delay(200).Wait();
-                        Beep();
-                        Task.Delay(200).Wait();
-                    }
+                    Beep();
+                    Task.Delay(200).Wait();
+                    Beep();
+                    Task.Delay(200).Wait();
 
                     _keyboard?.KeyUpAll(KeyGroup.CharKey);
                     ToggleDevices(false);
                     Environment.Exit(0);
+                }
+
+                if (e is { Code: EventCode.R })
+                {
+                    _keyboard?.KeyUpAll(KeyGroup.CharKey);
+                    ToggleDevices(false);
+                    LinuxCommandHelper.ExecuteCommand("reboot");
+                }
+
+                if (e is { Code: EventCode.S })
+                {
+                    _keyboard?.KeyUpAll(KeyGroup.CharKey);
+                    ToggleDevices(false);
+                    LinuxCommandHelper.ExecuteCommand("shutdown -h now");
                 }
 
                 if (e is not { Code: EventCode.Wakeup })
@@ -780,7 +791,7 @@ public static class Program
                 switch (Background)
                 {
                     case true:
-                        if (LinuxCommandChecker.IsCommandExists("beep")) Beep();
+                        Beep();
                         break;
                     case false:
                         MenuHandler.StartMenu();
