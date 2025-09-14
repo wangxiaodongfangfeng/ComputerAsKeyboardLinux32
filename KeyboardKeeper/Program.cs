@@ -84,12 +84,13 @@ internal class XInputTcpServer
         if (parts.Length < 2) return command;
         var operation = parts[1];
 
-        if (parts.Length == 2 || parts[0].Equals("input", StringComparison.OrdinalIgnoreCase))
+        if (parts.Length == 2 || parts[0].Equals("xinput", StringComparison.OrdinalIgnoreCase))
         {
             if (operation != "disable" && operation != "enable" && operation != "list")
             {
                 return "无效操作。请使用 disable 或 enable 或 list";
             }
+
             switch (operation)
             {
                 case "disable":
@@ -97,14 +98,18 @@ internal class XInputTcpServer
                     if (!File.Exists(".toggle_devices")) break;
                     var allLines = File.ReadAllLines(".toggle_devices");
                     var result = string.Empty;
-                    allLines.ToList().ForEach(line =>
-                    {
-                        result += ExecuteXInputCommand(operation, line.Contains(' ') ? $"'{line}'" : line);
-                    });
+                    var allxInputDevices = DeviceResolver.GetXInputDevices();
+                    var ids = allLines.Select(d =>
+                        {
+                            return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1;
+                        })
+                        .Where(d => d != -1);
+                    ids.ToList().ForEach(line => { result += ExecuteXInputCommand(operation, line.ToString()); });
                     return result;
                 case "list":
                     return ExecuteXInputCommand(operation);
             }
+
             return string.Empty;
         }
 

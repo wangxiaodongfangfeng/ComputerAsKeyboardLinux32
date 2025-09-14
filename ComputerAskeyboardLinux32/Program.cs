@@ -191,7 +191,8 @@ public static class Program
         }
         else
         {
-            ToggleInputDeviceIds.ForEach(id => { _ = SendXInputCommand(command, id, XinputServicePort); });
+            //ToggleInputDeviceIds.ForEach(id => { _ = SendXInputCommand(command, id, XinputServicePort); });
+            _ = SendXInputCommand(command, 0, XinputServicePort, true);
         }
     }
 
@@ -201,8 +202,10 @@ public static class Program
     /// <param name="operation">操作类型：disable或enable</param>
     /// <param name="deviceId">设备ID</param>
     /// <param name="serverPort"></param>
+    /// <param name="withoutId"></param>
     /// <returns>服务器响应结果</returns>
-    private static async Task<string> SendXInputCommand(string operation, int deviceId, int serverPort)
+    private static async Task<string> SendXInputCommand(string operation, int deviceId, int serverPort,
+        bool withoutId = false)
     {
         if (operation != "disable" && operation != "enable")
         {
@@ -219,7 +222,7 @@ public static class Program
             // 获取网络流
             await using var stream = client.GetStream();
             // 构建命令字符串
-            var command = $"xinput {operation} {deviceId}";
+            var command = withoutId ? $"xinput {operation}" : $"xinput {operation} {deviceId}";
             var data = Encoding.UTF8.GetBytes(command);
 
             // 发送命令到服务器
@@ -428,6 +431,7 @@ public static class Program
         {
             _ = BluetoothAutoConnector.MainBluetoothAutoConnect([]);
         }
+
         _ = SerialPortExtension.EnableAutoDetectAsync(BluetoothEnabled);
         if (RunAsService || Background)
         {

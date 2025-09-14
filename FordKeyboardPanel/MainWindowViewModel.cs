@@ -1,10 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using Avalonia.Data.Converters;
+using Timer = System.Timers.Timer;
 
 namespace FordKeyboardPanel
 {
@@ -13,6 +19,8 @@ namespace FordKeyboardPanel
         private string? _currentDate; // 日期和星期
         private string? _currentTime;
         private readonly Timer? _timer;
+
+        private TcpClient? _tcpClient = new TcpClient(IPAddress.Loopback.ToString(), 9988);
 
         public string? CurrentTime
         {
@@ -39,6 +47,25 @@ namespace FordKeyboardPanel
 
         // 常用波特率列表，用于下拉选择
         public int[] CommonBaudRates { get; } = [9600, 19200, 38400, 57600, 115200, 230400];
+
+        public static TcpClient CreateClientToCommunicate()
+        {
+            var client = new TcpClient(IPAddress.Loopback.ToString(), 9988);
+            return client;
+        }
+
+        // public async Task<List<string>> GetKeyboards()
+        // {
+        //     if (_tcpClient == null) return [];
+        //     var stream = _tcpClient?.GetStream();
+        //     if (stream == null) return [];
+        //     await stream.WriteAsync("list"u8.ToArray());
+        //     await stream.FlushAsync(CancellationToken.None);
+        //     if (stream.CanRead)
+        //     {
+        //         stream.ReadAsync()
+        //     }
+        // }
 
         public MainWindowViewModel()
         {

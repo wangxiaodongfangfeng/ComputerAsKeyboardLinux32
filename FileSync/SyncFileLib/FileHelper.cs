@@ -231,12 +231,7 @@ public static class FileHelper
         return $"{l.DestFilePath} ==  {r.DestFilePath}";
       }
 
-      if (l.FileSize != r.FileSize)
-      {
-        return $"{l.DestFilePath} <?> {r.DestFilePath}";
-      }
-
-      return string.Empty;
+      return l.FileSize != r.FileSize ? $"{l.DestFilePath} <?> {r.DestFilePath}" : string.Empty;
     }).ToList();
 
     var leftOnly = files

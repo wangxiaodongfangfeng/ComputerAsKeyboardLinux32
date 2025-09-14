@@ -3,12 +3,13 @@ using System.Runtime.CompilerServices;
 
 namespace FordKeyboardPanel
 {
-    public sealed class KeyboardDevice : INotifyPropertyChanged
+    public sealed class KeyboardDevice : ReactiveUI.ReactiveObject
     {
         private string? _name;
         private string? _path;
         private int _baudRate;
         private bool _isEnabled; // 新增：启用/禁用状态
+
         public string? Name
         {
             get => _name;
@@ -38,11 +39,17 @@ namespace FordKeyboardPanel
                 OnPropertyChanged();
             }
         }
+
         public bool IsEnabled
         {
             get => _isEnabled;
-            set { _isEnabled = value; OnPropertyChanged(); }
+            set
+            {
+                _isEnabled = value;
+                OnPropertyChanged();
+            }
         }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
