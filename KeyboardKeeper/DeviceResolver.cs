@@ -140,8 +140,8 @@ namespace KeyboardKeeper
 
             return devices;
         }
-
-        [GeneratedRegex(@"↳\s(?<name>[^\n]+?)\s+id=(?<id>\d+)\s+\[", RegexOptions.Multiline)]
+        
+        [GeneratedRegex(@"(∼|↳)\s(?<name>[^\n]+?)\s+id=(?<id>\d+)\s+\[", RegexOptions.Multiline)]
         private static partial Regex MyRegex2();
     }
 

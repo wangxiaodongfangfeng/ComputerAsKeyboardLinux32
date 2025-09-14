@@ -84,27 +84,31 @@ internal class XInputTcpServer
         if (parts.Length < 2) return command;
         var operation = parts[1];
 
-        if (parts.Length == 2 || parts[0].Equals("xinput", StringComparison.OrdinalIgnoreCase))
+        if (parts.Length == 2 && parts[0].Equals("xinput", StringComparison.OrdinalIgnoreCase))
         {
             if (operation != "disable" && operation != "enable" && operation != "list")
             {
                 return "无效操作。请使用 disable 或 enable 或 list";
             }
 
+            Console.WriteLine("operation is :" + parts[1]);
             switch (operation)
             {
                 case "disable":
                 case "enable":
-                    if (!File.Exists(".toggle_devices")) break;
-                    var allLines = File.ReadAllLines(".toggle_devices");
+                    if (!File.Exists("/home/ford/ford-keyboard/.toggle_devices")) break;
+                    var allLines = File.ReadAllLines("/home/ford/ford-keyboard/.toggle_devices");
                     var result = string.Empty;
                     var allxInputDevices = DeviceResolver.GetXInputDevices();
+                    allxInputDevices.ToList().ForEach(Console.WriteLine);
                     var ids = allLines.Select(d =>
                         {
                             return allxInputDevices.FirstOrDefault(xi => xi.Name == d)?.Id ?? -1;
                         })
                         .Where(d => d != -1);
-                    ids.ToList().ForEach(line => { result += ExecuteXInputCommand(operation, line.ToString()); });
+                    var idArray = ids as int[] ?? ids.ToArray();
+                    idArray.ToList().ForEach(Console.WriteLine);
+                    idArray.ToList().ForEach(line => { result += ExecuteXInputCommand(operation, line.ToString()); });
                     return result;
                 case "list":
                     return ExecuteXInputCommand(operation);

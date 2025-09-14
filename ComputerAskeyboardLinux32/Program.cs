@@ -176,10 +176,10 @@ public static class Program
 
     private static void ToggleDevices(bool toggle)
     {
-        if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
         var command = toggle ? "disable" : "enable";
         if (!RunAsService)
         {
+            if (!HasXInput || ToggleInputDeviceIds.Count == 0) return;
             try
             {
                 ToggleInputDeviceIds.ForEach(id => { LinuxCommandHelper.ExecuteCommand($"xinput {command} {id}"); });
