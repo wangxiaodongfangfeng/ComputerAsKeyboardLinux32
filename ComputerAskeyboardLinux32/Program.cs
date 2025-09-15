@@ -714,15 +714,15 @@ public static class Program
         return keyCode;
     }
 
-    private static void Beep()
+    private static void Aplay(string path)
     {
         try
         {
-            if (!File.Exists("/home/ford/ford-keyboard/alert.wav")) return;
+            if (!File.Exists(path)) return;
             var startInfo = new ProcessStartInfo
             {
                 FileName = "aplay",
-                Arguments = "/home/ford/ford-keyboard/alert.wav", // 传递beep的参数
+                Arguments = path, // 传递beep的参数
                 UseShellExecute = false,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -739,6 +739,16 @@ public static class Program
         {
             Console.WriteLine($"异常：{ex.Message}");
         }
+    }
+
+    private static void Beep()
+    {
+        Aplay("/home/ford/ford-keyboard/beep.wav");
+    }
+
+    private static void Alert()
+    {
+        Aplay("/home/ford/ford-keyboard/alert.wav");
     }
 
     private static void EnableMenuFunction(this AggregateInputReader reader)
@@ -765,6 +775,7 @@ public static class Program
 
                 if (e is { Code: EventCode.R })
                 {
+                    Beep();
                     _keyboard?.KeyUpAll(KeyGroup.CharKey);
                     ToggleDevices(false);
                     LinuxCommandHelper.ExecuteCommand("reboot");
@@ -772,6 +783,7 @@ public static class Program
 
                 if (e is { Code: EventCode.S })
                 {
+                    Beep();
                     _keyboard?.KeyUpAll(KeyGroup.CharKey);
                     ToggleDevices(false);
                     LinuxCommandHelper.ExecuteCommand("shutdown -h now");
@@ -791,7 +803,7 @@ public static class Program
                 switch (Background)
                 {
                     case true:
-                        Beep();
+                        Alert();
                         break;
                     case false:
                         MenuHandler.StartMenu();

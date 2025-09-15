@@ -39,16 +39,16 @@
     <!-- 左侧：数字时钟 -->
     <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Margin="5" Background="#F0F0F0">
       <Grid RowDefinitions="*,*">
-        
+
         <!-- 日期和星期显示（上方） -->
-        <TextBlock Grid.Row="0" Text="{Binding CurrentDate}" 
+        <TextBlock Grid.Row="0" Text="{Binding CurrentDate}"
                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                   FontSize="64" FontWeight="SemiBold" 
-                   Foreground="#34495E" 
-                   Margin="0 0 0 10"/>
-        
+                   FontSize="64" FontWeight="SemiBold"
+                   Foreground="#34495E"
+                   Margin="0 0 0 10" />
+
         <TextBlock Grid.Row="1" Text="{Binding CurrentTime}"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"
                    FontSize="128" FontWeight="Bold"
                    Foreground="#2C3E50" />
       </Grid>
@@ -66,15 +66,18 @@
                     RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="Auto,*">
 
                 <!-- 设备名称 -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" FontWeight="Bold" Margin="0 0 5 2" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 2" />
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" Margin="0 0 0 2" />
 
                 <!-- 设备路径 -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Path:" VerticalAlignment="Center" FontWeight="Bold" Margin="0 0 5 2" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Path:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 2" />
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path}" Margin="0 0 0 2" />
 
                 <!-- 波特率（可编辑） -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Baud Rate:" VerticalAlignment="Center" FontWeight="Bold" Margin="0 0 5 0" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Baud Rate:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 0" />
                 <ComboBox Grid.Row="2" Grid.Column="1"
                           ItemsSource="{Binding DataContext.CommonBaudRates, ElementName=DeviceListBox}"
                           SelectedItem="{Binding BaudRate}"
