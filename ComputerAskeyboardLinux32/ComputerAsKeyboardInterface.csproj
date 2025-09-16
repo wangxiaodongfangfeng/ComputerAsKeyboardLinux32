@@ -30,6 +30,9 @@
     <None Update="alert.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="beep.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Update="bluetooth_auto_connect.py">
@@ -41,6 +44,9 @@
     <None Update="ford-keyboard.service">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="BlindTerminal\" />
   </ItemGroup>
 
 </Project>
