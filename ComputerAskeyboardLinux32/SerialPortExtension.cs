@@ -1,0 +1,123 @@
+﻿using System.IO.Ports;
+using ComputerAsKeyboardInterface.Bluetooth;
+using PowerArgs;
+
+namespace ComputerAsKeyboardInterface;
+
+public static class SerialPortExtension
+{
+    public static Dictionary<string, SerialPort> AllAvailablePorts { get; set; } = new();
+
+    public static SerialPort? CurrentSerialPort { get; set; }
+
+    public static int BaudRate { get; set; } = 9600;
+
+
+    public static async Task EnableAutoDetectAsync(bool bluetoothPort)
+    {
+        while (true)
+        {
+            await Task.Delay(2000);
+            var files = Directory.GetFiles("/dev");
+            files.ForEach(f =>
+            {
+                if (!(f.Contains("ttyUSB") || f.Contains("rfcomm"))) return;
+                if (AllAvailablePorts.ContainsKey(f)) return;
+                Console.WriteLine($"serial-port added {f}");
+                AddSerialPort(f);
+            });
+            var needRemoved = new List<string>();
+            AllAvailablePorts.ForEach(p =>
+            {
+                if (!File.Exists(p.Key))
+                {
+                    needRemoved.Add(p.Key);
+                }
+            });
+            if (bluetoothPort)
+            {
+                var status = BluetoothManager.GetRfcommStatus();
+                AllAvailablePorts.Where(p => p.Key.Contains("rfcomm"))
+                    .ForEach(p =>
+                    {
+                        var filename = Path.GetFileName(p.Key);
+                        if (!status.Any(s => s.Contains(filename)))
+                        {
+                            needRemoved.Add(p.Key);
+                        }
+
+                        if (status.Any(s => s.Contains(filename) && s.Contains("closed")))
+                        {
+                            needRemoved.Add(p.Key);
+                        }
+                    });
+            }
+
+            needRemoved.ForEach(RemoveSerialPort);
+            //await Task.Delay(5000);
+        }
+    }
+
+
+    public static SerialPort? GetSerialPort(string portName)
+    {
+        if (!AllAvailablePorts.ContainsKey(portName)) return null;
+        var kvp = AllAvailablePorts.FirstOrDefault(kvp => kvp.Key == portName);
+        return kvp.Value;
+    }
+
+    public static void AddSerialPort(string portName)
+    {
+        if (AllAvailablePorts.TryGetValue(portName, out var port))
+        {
+            if (port.IsOpen) return;
+        }
+
+        port = new SerialPort(portName, portName.Contains("ttyUSB") ? 9600 : BaudRate);
+        port.Open();
+        AllAvailablePorts.Add(portName, port);
+        CurrentSerialPort ??= port;
+    }
+
+    public static void RemoveSerialPort(string portName)
+    {
+        var port = AllAvailablePorts[portName];
+        AllAvailablePorts.Remove(portName);
+        if (CurrentSerialPort?.PortName == port.PortName)
+        {
+            CurrentSerialPort = AllAvailablePorts.Count > 0 ? AllAvailablePorts.Values.First() : null;
+        }
+
+        port?.Close();
+        port?.Dispose();
+    }
+
+    public static void SwitchSerialPort(int index)
+    {
+        CurrentSerialPort = AllAvailablePorts.Values.ToList()[(index) % (AllAvailablePorts.Count)];
+        Program.WriteLogOnScreen($"Current Serial Port Switched {CurrentSerialPort.PortName}");
+    }
+
+    public static void SwitchSerialPort()
+    {
+        if (CurrentSerialPort == null)
+        {
+            CurrentSerialPort = AllAvailablePorts.Values.First();
+            return;
+        }
+
+        var index = 0;
+        foreach (var port in AllAvailablePorts.Values)
+        {
+            if (port.PortName == CurrentSerialPort.PortName)
+            {
+                index = (index + 1) % AllAvailablePorts.Count;
+                break;
+            }
+
+            index++;
+        }
+
+        SwitchSerialPort(index);
+    }
+}

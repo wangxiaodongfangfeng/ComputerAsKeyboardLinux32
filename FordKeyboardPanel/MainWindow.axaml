@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fordKeyboardPanel="clr-namespace:FordKeyboardPanel"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+        x:Class="FordKeyboardPanel.MainWindow"
+        Title="FordKeyboardPanel"
+        d:DataContext="{d:DesignInstance fordKeyboardPanel:MainWindowViewModel}"
+        x:DataType="fordKeyboardPanel:MainWindowViewModel">
+  <!-- 资源：自定义ListBoxItem样式 -->
+  <Window.Styles>
+    <Style Selector="ListBoxItem">
+      <!-- 默认状态边框 -->
+      <Setter Property="BorderThickness" Value="0" /> <!-- 去掉默认边框 -->
+      <Setter Property="Padding" Value="2" /> <!-- 调整内边距 -->
+      <Setter Property="Margin" Value="1" /> <!-- 调整项之间的间距 -->
+
+      <!-- 选中状态样式 -->
+      <Style Selector="^:selected">
+        <Setter Property="Background" Value="#D0E8FF" /> <!-- 选中时背景色 -->
+        <Setter Property="BorderThickness" Value="1" /> <!-- 选中时边框厚度 -->
+        <Setter Property="BorderBrush" Value="#6495ED" /> <!-- 选中时边框颜色 -->
+      </Style>
+
+      <!-- 鼠标悬停状态 -->
+      <Style Selector="^:hover">
+        <Setter Property="Background" Value="#F0F0F0" /> <!-- 悬停时背景色 -->
+      </Style>
+    </Style>
+  </Window.Styles>
+  <!-- 定义转换器 -->
+  <Window.Resources>
+    <fordKeyboardPanel:BoolToEnableDisableConverter x:Key="BoolToEnableDisableConverter" />
+  </Window.Resources>
+  <Grid Margin="10" ColumnDefinitions="7*,3*">
+    <!-- 两列布局，左侧70%宽度，右侧30%宽度 -->
+
+    <!-- 左侧：数字时钟 -->
+    <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Margin="5" Background="#F0F0F0">
+      <Grid RowDefinitions="*,*">
+
+        <!-- 日期和星期显示（上方） -->
+        <TextBlock Grid.Row="0" Text="{Binding CurrentDate}"
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                   FontSize="64" FontWeight="SemiBold"
+                   Foreground="#34495E"
+                   Margin="0 0 0 10" />
+
+        <TextBlock Grid.Row="1" Text="{Binding CurrentTime}"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                   FontSize="128" FontWeight="Bold"
+                   Foreground="#2C3E50" />
+      </Grid>
+    </Border>
+
+    <!-- 右侧：键盘设备列表 -->
+    <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Margin="5" Background="#F0F0F0">
+      <Grid RowDefinitions="Auto,*">
+
+        <ListBox Grid.Row="1" x:DataType="fordKeyboardPanel:MainWindowViewModel"
+                 ItemsSource="{Binding KeyboardDevices}" Margin="5" x:Name="DeviceListBox">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid Margin="0" Background="#E0E0E0"
+                    RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="Auto,*">
+
+                <!-- 设备名称 -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 2" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" Margin="0 0 0 2" />
+
+                <!-- 设备路径 -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Path:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 2" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path}" Margin="0 0 0 2" />
+
+                <!-- 波特率（可编辑） -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Baud Rate:" VerticalAlignment="Center" FontWeight="Bold"
+                           Margin="0 0 5 0" />
+                <ComboBox Grid.Row="2" Grid.Column="1"
+                          ItemsSource="{Binding DataContext.CommonBaudRates, ElementName=DeviceListBox}"
+                          SelectedItem="{Binding BaudRate}"
+                          Width="120" />
+                <!-- 新增：启用/禁用切换按钮 -->
+                <ToggleButton Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0"
+                              Content="{Binding IsEnabled, Converter={StaticResource BoolToEnableDisableConverter}}"
+                              IsChecked="{Binding IsEnabled}"
+                              HorizontalAlignment="Right"
+                              VerticalContentAlignment="Center"
+                              HorizontalContentAlignment="Center"
+                              Margin="0 0 0 0"
+                              Width="100"
+                              Height="35" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilesManipulator", "FilesManipulator\FilesManipulator.csproj", "{10BD5D81-C95C-4736-A205-C7A4BAF2761E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileWriter", "FileWriter\FileWriter.csproj", "{EA42B666-9CA4-463D-9FE2-AC001A3FF61B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpFileTransferServer", "TcpFileTransferServer\TcpFileTransferServer.csproj", "{A8750057-DB16-4A40-9EB0-37B33C6903EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpFileTransferClient", "TcpFileTransferClient\TcpFileTransferClient.csproj", "{554241C3-7810-419A-835C-B51CB2AAE728}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncFileLib", "SyncFileLib\SyncFileLib.csproj", "{69FF471E-799B-4DE0-A7CC-8619B204BD81}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{10BD5D81-C95C-4736-A205-C7A4BAF2761E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10BD5D81-C95C-4736-A205-C7A4BAF2761E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10BD5D81-C95C-4736-A205-C7A4BAF2761E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10BD5D81-C95C-4736-A205-C7A4BAF2761E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA42B666-9CA4-463D-9FE2-AC001A3FF61B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA42B666-9CA4-463D-9FE2-AC001A3FF61B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA42B666-9CA4-463D-9FE2-AC001A3FF61B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA42B666-9CA4-463D-9FE2-AC001A3FF61B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8750057-DB16-4A40-9EB0-37B33C6903EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8750057-DB16-4A40-9EB0-37B33C6903EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8750057-DB16-4A40-9EB0-37B33C6903EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8750057-DB16-4A40-9EB0-37B33C6903EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{554241C3-7810-419A-835C-B51CB2AAE728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{554241C3-7810-419A-835C-B51CB2AAE728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{554241C3-7810-419A-835C-B51CB2AAE728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{554241C3-7810-419A-835C-B51CB2AAE728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69FF471E-799B-4DE0-A7CC-8619B204BD81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69FF471E-799B-4DE0-A7CC-8619B204BD81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69FF471E-799B-4DE0-A7CC-8619B204BD81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69FF471E-799B-4DE0-A7CC-8619B204BD81}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

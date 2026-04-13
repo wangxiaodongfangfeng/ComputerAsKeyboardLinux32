@@ -1,0 +1,13 @@
+﻿[Unit]
+Description=RunningKeyboardInBackground  
+After=autoconnect.service
+Requires=autoconnect.service
+
+[Service]
+WorkingDirectory=/home/ford/ford-keyboard  
+ExecStart=/home/ford/ford-keyboard/ford-keyboard -mt true -br 115200 -bp true -b true -s true -x 9869  
+Restart=on-failure               
+RestartSec=5            
+
+[Install]
+WantedBy=multi-user.target  

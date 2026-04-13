@@ -15,23 +15,6 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         public int MessageLogCount = 32;
 
-        private void AddMessageLog(string message)
-        {
-            if (MessageLog.Count > MessageLogCount)
-            {
-                MessageLog.Dequeue();
-            }
-
-            ;
-            MessageLog.Enqueue(message);
-        }
-
-        public string GetMessageLog()
-        {
-            return String.Join("\r\n", MessageLog);
-        }
-
-
         public Btk05(string portName = "COM5", int xSize = 1920, int ySize = 1080, int baudRate = 9600)
         {
             this.PortName = portName;
@@ -52,16 +35,17 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         private void CreateMediaKeyTable()
         {
-            _mediaKeyTable = new Dictionary<MediaKey, byte[]>();
-
-            _mediaKeyTable.Add(MediaKey.Eject, [0x02, 0x80, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Cdstop, [0x02, 0x40, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Prevtrack, [0x02, 0x20, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Nexttrack, [0x02, 0x10, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Playpause, [0x02, 0x08, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Mute, [0x02, 0x04, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Volumedown, [0x02, 0x02, 0x00, 0x00]);
-            _mediaKeyTable.Add(MediaKey.Volumeup, [0x02, 0x01, 0x00, 0x00]);
+            _mediaKeyTable = new Dictionary<MediaKey, byte[]>
+            {
+                { MediaKey.Eject, [0x02, 0x80, 0x00, 0x00] },
+                { MediaKey.Cdstop, [0x02, 0x40, 0x00, 0x00] },
+                { MediaKey.Prevtrack, [0x02, 0x20, 0x00, 0x00] },
+                { MediaKey.Nexttrack, [0x02, 0x10, 0x00, 0x00] },
+                { MediaKey.Playpause, [0x02, 0x08, 0x00, 0x00] },
+                { MediaKey.Mute, [0x02, 0x04, 0x00, 0x00] },
+                { MediaKey.Volumedown, [0x02, 0x02, 0x00, 0x00] },
+                { MediaKey.Volumeup, [0x02, 0x01, 0x00, 0x00] }
+            };
         }
 
         public Dictionary<byte[], string> KeyTable;
@@ -346,9 +330,9 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             return "";
         }
 
-        private byte[] CreatePacketArray(List<int> arrList, bool addCheckSum)
+        private static byte[] CreatePacketArray(List<int> arrList, bool addCheckSum)
         {
-            List<byte> bytePacketList = arrList.ConvertAll(b => (byte)b);
+            var bytePacketList = arrList.ConvertAll(b => (byte)b);
             if (addCheckSum) bytePacketList.Add((byte)(arrList.Sum() & 0xff));
             return bytePacketList.ToArray();
         }
@@ -356,19 +340,19 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         /// <summary>
         /// charKeyUpPacket
         /// </summary>
-        readonly byte[] _charKeyUpPacket = [0x0C, 0x00, 0xA1, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        private readonly byte[] _charKeyUpPacket = [0x0C, 0x00, 0xA1, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
         /// <summary>
         /// 
         /// mediaKeyUpPacket
         /// </summary>
-        readonly byte[] _mediaKeyUpPacket = [0x57, 0xAB, 0x00, 0x03, 0x04, 0x02, 0x00, 0x00, 0x00, 0x0B];
+        private readonly byte[] _mediaKeyUpPacket = [0x57, 0xAB, 0x00, 0x03, 0x04, 0x02, 0x00, 0x00, 0x00, 0x0B];
 
 
         /// <summary>
         /// Push key
         /// </summary>
-        /// <param name="CMD">KetType</param>
+        /// <param name="keyGroup"></param>
         /// <param name="k0">special key code</param>
         /// <param name="k1">key code #1</param>
         /// <param name="k2">key code #2</param>
@@ -380,7 +364,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             byte k6 = 0)
         {
             List<int> keyDownPacketListInt = [0x0C, 0x00, 0xA1, 0x01, k0, 0x00, k1, k2, k3, k4, k5, k6];
-            byte[] keyDownPacket = CreatePacketArray(keyDownPacketListInt, false);
+            var keyDownPacket = CreatePacketArray(keyDownPacketListInt, false);
             SendPacket(keyDownPacket);
         }
 
@@ -392,16 +376,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         public void KeyUpAll(KeyGroup keyGroup)
         {
-            if (keyGroup == KeyGroup.CharKey)
-            {
-                SendPacket(_charKeyUpPacket);
-            }
-            else
-            {
-                SendPacket(_mediaKeyUpPacket);
-            }
-
-            ;
+            SendPacket(keyGroup == KeyGroup.CharKey ? _charKeyUpPacket : _mediaKeyUpPacket);
         }
 
         public void KeyDown(SpecialKeyCode specialKeyCode)
@@ -409,7 +384,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             KeyDown(KeyGroup.CharKey, (byte)specialKeyCode, 0x00);
         }
 
-        public void CharKeyType(byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
+        private void CharKeyType(byte k0, byte k1, byte k2 = 0, byte k3 = 0, byte k4 = 0, byte k5 = 0, byte k6 = 0)
         {
             KeyDown(KeyGroup.CharKey, k0, k1, k2, k3, k4, k5, k6);
             KeyUpAll(KeyGroup.CharKey);
@@ -417,7 +392,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
         public void MediaKeyType(MediaKey mediaKey)
         {
-            byte[] dat = _mediaKeyTable[mediaKey];
+            var dat = _mediaKeyTable[mediaKey];
             KeyDown(KeyGroup.MediaKey, dat[0], dat[1], dat[2], dat[3]);
             KeyUpAll(KeyGroup.MediaKey);
         }
@@ -426,46 +401,11 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         {
             if (typeString.Length < 1) return;
 
-            foreach (char s in typeString)
+            foreach (var dat in from s in typeString where _charKeyTable.ContainsKey(s.ToString()) select _charKeyTable[s.ToString()])
             {
-                if (_charKeyTable.ContainsKey(s.ToString()))
-                {
-                    byte[] dat = _charKeyTable[s.ToString()];
-                    CharKeyType(dat[0], dat[1]);
-                }
+                CharKeyType(dat[0], dat[1]);
             }
         }
-
-        public void MouseMoveAbs(int x, int y)
-        {
-            int xAbs = (int)(4096 * x / XSize);
-            int yAbs = (int)(4096 * y / YSize);
-
-            // ========================
-            // mouseMoveAbsPacketContents
-            // HEAD{0x57, 0xAB} + ADDR{0x00} + CMD{0x04} + LEN{0x07} + DATA{0x02, 0x00, [x],[x],[y],[y], 0x00}
-            // CMD = 0x04 : USB mouse absolute mode
-            // ========================
-            List<int> mouseMoveAbsPacketListInt =
-            [
-                0x57,
-                0xAB,
-                0x00,
-                0x04,
-                0x07,
-                0x02,
-                0x00,
-                (byte)(xAbs & 0xff),
-                (byte)(xAbs >> 8),
-                (byte)(yAbs & 0xff),
-                (byte)(yAbs >> 8),
-                0x00
-            ];
-
-            byte[] mouseMoveAbsPacket = CreatePacketArray(mouseMoveAbsPacketListInt, true);
-            SendPacket(mouseMoveAbsPacket);
-        }
-
 
         public void MouseMoveRel(int x, int y, bool keyHold, MouseButtonCode button)
         {
@@ -506,8 +446,8 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 mouseMoveRelPacketListInt[4] = (byte)button;
             }
 
-            byte[] bytesx = BitConverter.GetBytes((short)x);
-            byte[] bytesy = BitConverter.GetBytes((short)y);
+            var bytesx = BitConverter.GetBytes((short)x);
+            var bytesy = BitConverter.GetBytes((short)y);
 
 
             mouseMoveRelPacketListInt.Add((byte)(bytesx[0]));
@@ -517,7 +457,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             mouseMoveRelPacketListInt.Add(0x00);
             mouseMoveRelPacketListInt.Add(0x00);
 
-            byte[] mouseMoveRelPacket = CreatePacketArray(mouseMoveRelPacketListInt, false);
+            var mouseMoveRelPacket = CreatePacketArray(mouseMoveRelPacketListInt, false);
             SendPacket(mouseMoveRelPacket);
         }
 
@@ -547,7 +487,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
                 0x00
             ];
 
-            byte[] mouseMoveRelPacket = CreatePacketArray(mouseMoveRelPacketListInt, true);
+            var mouseMoveRelPacket = CreatePacketArray(mouseMoveRelPacketListInt, true);
             SendPacket(mouseMoveRelPacket);
         }
 
@@ -558,7 +498,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         readonly byte[] _mouseButtonUpPacketForMac =
             [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-        public void MouseButtonDownForMac(MouseButtonCode buttonCode)
+        public bool MouseButtonDownForMac(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -568,13 +508,15 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             List<int> mouseButtonDownPacketListInt = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
             mouseButtonDownPacketListInt[4] = (int)buttonCode;
 
-            byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
+            var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAllForMac()
+        public bool MouseButtonUpAllForMac()
         {
             SendPacket(_mouseButtonUpPacketForMac);
+            return true;
         }
 
         public void MouseScrollForMac(int value)
@@ -585,12 +527,12 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             // CMD = 0x05 : USB mouse relative mode
             // ========================
             List<int> mouseButtonDownPacketListInt = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-            byte[] bytes = BitConverter.GetBytes((short)value);
+            var bytes = BitConverter.GetBytes((short)value);
             mouseButtonDownPacketListInt[9] = bytes[0];
             mouseButtonDownPacketListInt[10] = bytes[1];
             mouseButtonDownPacketListInt[4] = (int)MouseButtonCode.Middle;
 
-            byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
+            var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
             SendPacket(mouseButtonDownPacket);
         }
 
@@ -600,7 +542,7 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
         /// </summary>
         readonly byte[] _mouseButtonUpPacket = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-        public void MouseButtonDown(MouseButtonCode buttonCode)
+        public bool MouseButtonDown(MouseButtonCode buttonCode)
         {
             // ========================
             // mouseClickPacketContents
@@ -610,13 +552,25 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
             List<int> mouseButtonDownPacketListInt = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
             mouseButtonDownPacketListInt[4] = (int)buttonCode;
 
-            byte[] mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
+            var mouseButtonDownPacket = CreatePacketArray(mouseButtonDownPacketListInt, false);
             SendPacket(mouseButtonDownPacket);
+            return true;
         }
 
-        public void MouseButtonUpAll()
+        public bool ToggleMouseButton(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDown(mouseCode) : MouseButtonUpAll();
+        }
+
+        public bool ToggleMouseButtonForMac(bool keyDown, MouseButtonCode mouseCode)
+        {
+            return keyDown ? MouseButtonDownForMac(mouseCode) : MouseButtonUpAllForMac();
+        }
+
+        public bool MouseButtonUpAll()
         {
             SendPacket(_mouseButtonUpPacket);
+            return true;
         }
 
         public void MouseClick(MouseButtonCode buttonCode)
@@ -659,13 +613,13 @@ namespace ComputerAsKeyboardInterface.KeyboardRelated
 
             List<int> mouseScrollPacketListInt = [0x0B, 0x00, 0xA1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00];
 
-            short value = (short)scrollCount;
-            byte[] bytes = BitConverter.GetBytes(value);
+            var value = (short)scrollCount;
+            var bytes = BitConverter.GetBytes(value);
 
             mouseScrollPacketListInt.Add(bytes[1]);
             mouseScrollPacketListInt.Add(bytes[0]);
 
-            byte[] mouseScrollPacket = CreatePacketArray(mouseScrollPacketListInt, false);
+            var mouseScrollPacket = CreatePacketArray(mouseScrollPacketListInt, false);
             return SendPacket(mouseScrollPacket);
         }
 

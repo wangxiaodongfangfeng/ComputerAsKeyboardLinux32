@@ -1,6 +1,8 @@
-﻿namespace ComputerAsKeyboardInterface
+﻿using ComputerAsKeyboardInterface.KeyboardRelated;
+
+namespace ComputerAsKeyboardInterface
 {
-    public class MenuHandler
+    public static class MenuHandler
     {
         private static string Menu { get; set; } = """
 
@@ -32,6 +34,7 @@
                         chars.Add(chartList);
                         return;
                     }
+
                     chartList.Add(c);
                 });
                 return chars;
@@ -40,28 +43,33 @@
 
         public static void StartMenu()
         {
-        showMenu:
+            showMenu:
             Console.Clear();
             Console.CursorVisible = true;
             Console.SetCursorPosition(0, 0);
             CommandMode = true;
-
+            Console.BackgroundColor = ConsoleColor.Black;
             var width = Console.WindowWidth;
             var height = Console.WindowHeight;
 
             var leftOffset = (width - MenuChars[1].Count) / 2;
             var topOffset = (height - MenuChars.Count) / 2;
-            for (var i = 0; i < topOffset; i++) { Console.WriteLine(); }
+            for (var i = 0; i < topOffset; i++)
+            {
+                Console.WriteLine();
+            }
+
             MenuChars.ForEach(chars =>
             {
                 for (var i = 0; i < leftOffset; i++)
                 {
                     Console.Write(" ");
                 }
-                chars.ForEach(c => { Console.Write(c); });
+
+                chars.ForEach(Console.Write);
                 Console.WriteLine();
             });
-        readagin:
+            readagin:
             var menu = Console.ReadKey();
             switch (menu.KeyChar)
             {
@@ -89,6 +97,7 @@
         private static void HandleExitProgram()
         {
             BeforeExitApplication?.Invoke();
+            Program.ExitInNext = true;
             Environment.Exit(0);
         }
 
@@ -97,12 +106,13 @@
             CommandMode = false;
             ThinkpadKeyLayout.WriteKeyboardOnScreen();
         }
+
         private static void FunctionForSetPassword()
         {
             Console.Clear();
             Console.CursorVisible = true;
             Console.SetCursorPosition(0, 0);
-            MenuHandler.CommandMode = true;
+            CommandMode = true;
             Console.WriteLine("Please Input Your Password");
             Program.Password = Console.ReadLine();
             Console.WriteLine($"Your password is {Program.Password}, Confirm? (Y/n)");
@@ -114,7 +124,6 @@
 
         private static void HandleRefreshKeyboard()
         {
-
         }
     }
 }
