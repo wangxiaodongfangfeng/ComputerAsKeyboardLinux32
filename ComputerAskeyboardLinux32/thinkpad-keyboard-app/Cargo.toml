@@ -1,0 +1,11 @@
+[package]
+name = "thinkpad-keyboard-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serialport = "4.9"
+clap = { version = "4", features = ["derive"] }
+lazy_static = "1.4"
+bitflags = "2.4"
+libc = "0.2"
